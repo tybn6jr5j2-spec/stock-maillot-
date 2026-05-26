@@ -849,14 +849,19 @@ function handleFile(inp){
   if(!f) return;
   const r = new FileReader();
   r.onload = e => {
-    // Convertir en JPEG via canvas pour éviter les problèmes HEIC
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // Redimensionner à max 1600px
+      const maxSize = 1600;
+      let w = img.width, h = img.height;
+      if(w > maxSize || h > maxSize) {
+        if(w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, w, h);
       scanImg = canvas.toDataURL('image/jpeg', 0.85);
       const box = document.getElementById('uploadBox');
       box.innerHTML = `<img src="${scanImg}" style="max-width:100%;max-height:240px;border-radius:8px;object-fit:contain"><br><button onclick="document.getElementById('fileInput').click()" style="margin-top:8px;background:#f1f5f9;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">Changer la photo</button>`;
