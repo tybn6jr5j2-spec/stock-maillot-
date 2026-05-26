@@ -872,9 +872,8 @@ async function analyzeScan(){
   const content = document.getElementById('scanContent');
   content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">Lecture en cours…</p><p style="font-size:12px;color:#94a3b8">L'IA analyse chaque ligne</p></div>`;
 
-  const b64 = scanImg.split(',')[1];
+  const b64 = scanImg.split(',')[1].replace(/\s/g, '');
   let mime = scanImg.split(';')[0].split(':')[1];
-  // Force JPEG si format non supporté (HEIC, etc.)
   if(!['image/jpeg','image/png','image/gif','image/webp'].includes(mime)) mime = 'image/jpeg';
 
   const prompt = `Tu analyses une feuille de caisse d'un magasin de maillots de bain. Extrait UNIQUEMENT la colonne "Désignation produit". Ignore Prix, CB, Espèces.
