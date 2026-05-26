@@ -881,61 +881,15 @@ async function analyzeScan(){
   let mime = scanImg.split(';')[0].split(':')[1];
   if(!['image/jpeg','image/png','image/gif','image/webp'].includes(mime)) mime = 'image/jpeg';
 
-  const BAM_HAUTS_KEYS = ["Triangle - Blanc","Triangle - Grecque","Triangle - Electrique","Triangle - Lurex Bleue","Triangle - Marine","Triangle - Rose","Triangle - Motif Rose","Triangle - Kaki","Triangle - Lurex Kaki","Triangle - Motif Vert","Triangle - Jaune","Triangle - Lurex Marron","Triangle - Marron","Triangle - Noir","Triangle - Léopard","Bandeau Souple - Grecque","Bandeau Souple - Electrique","Bandeau Souple - Lurex Bleue","Bandeau Souple - Rose","Bandeau Souple - Lurex Kaki","Bandeau Souple - Jaune","Bandeau Souple - Lurex Marron","Bandeau Souple - Noir","Bandeau Dur - Blanc","Bandeau Dur - Grecque","Bandeau Dur - Electrique","Bandeau Dur - Lurex Bleue","Bandeau Dur - Marine","Bandeau Dur - Rose","Bandeau Dur - Motif Rose","Bandeau Dur - Kaki","Bandeau Dur - Lurex Kaki","Bandeau Dur - Motif Vert","Bandeau Dur - Jaune","Bandeau Dur - Lurex Marron","Bandeau Dur - Marron","Bandeau Dur - Noir","Bandeau Dur - Léopard","SG GT - Grecque","SG GT - Electrique","SG GT - Lurex Bleue","SG GT - Marine","SG GT - Rose","SG GT - Motif Rose","SG GT - Kaki","SG GT - Lurex Kaki","SG GT - Motif Vert","SG GT - Lurex Marron","SG GT - Marron","SG GT - Noir","SG GT - Léopard"];
-  const BAM_BAS_KEYS = ["Culotte Normale - Blanc","Culotte Normale - Grecque","Culotte Normale - Electrique","Culotte Normale - Lurex Bleue","Culotte Normale - Marine","Culotte Normale - Rose","Culotte Normale - Motif Rose","Culotte Normale - Kaki","Culotte Normale - Lurex Kaki","Culotte Normale - Motif Vert","Culotte Normale - Jaune","Culotte Normale - Lurex Marron","Culotte Normale - Marron","Culotte Normale - Noir","Culotte Normale - Léopard","Culotte Nœud - Blanc","Culotte Nœud - Grecque","Culotte Nœud - Electrique","Culotte Nœud - Lurex Bleue","Culotte Nœud - Marine","Culotte Nœud - Rose","Culotte Nœud - Motif Rose","Culotte Nœud - Kaki","Culotte Nœud - Lurex Kaki","Culotte Nœud - Motif Vert","Culotte Nœud - Jaune","Culotte Nœud - Lurex Marron","Culotte Nœud - Marron","Culotte Nœud - Noir","Culotte Nœud - Léopard","Culotte GT - Blanc","Culotte GT - Grecque","Culotte GT - Electrique","Culotte GT - Lurex Bleue","Culotte GT - Marine","Culotte GT - Rose","Culotte GT - Motif Rose","Culotte GT - Kaki","Culotte GT - Lurex Kaki","Culotte GT - Motif Vert","Culotte GT - Lurex Marron","Culotte GT - Marron","Culotte GT - Noir","Culotte GT - Léopard","Tanga - Blanc","Tanga - Grecque","Tanga - Lurex Marine","Tanga - Marine","Tanga - Rose","Tanga - Motif Rose","Tanga - Kaki","Tanga - Lurex Kaki","Tanga - Motif Vert","Tanga - Jaune","Tanga - Lurex Marron","Tanga - Marron","Tanga - Noir","Tanga - Léopard","Shorty - Noir","Shorty - Marine","Shorty - Kaki"];
-  const SUN_KEYS = ["Bleu Electrique","Corail Fluo","Kaki","Bleue Ciel","Jaune Fluo","Beige Gris","Vertdeau","Noir","Rayure Gris Blanc","Rayure Rouge Blanc","Gaufre Vert","Turtles Bleue","Hibiscus Flash","Gaufre Bleue","Gaufre Marine","Gaufre Kaki","Rose Pale","Fleur Blanche","Kaki GT","Noir GT","Bleue Ciel GT"];
-  const LAGON_KEYS = ["Léa Uni","Léa Gold","Léa Tanga","Laetitia MG","Inès","Lolita","Ramatuelle M","St Trop","Laurie Gold","Lili Ramatuelle","Lili St Trop","Perrine G","Maya","Marilyn Marin","Britt","Anita Gaufre","Nathalie","Cécilia","Cécile","Tankini","Léa Kids Uni","Léa Kids Gold"];
+  const prompt = `Tu analyses une feuille de caisse d'un magasin de maillots de bain. Extrait UNIQUEMENT la colonne "Désignation produit". Ignore Prix, CB, Espèces.
 
-  const prompt = `Tu analyses une feuille de caisse manuscrite d'un magasin de maillots de bain.
-Extrait UNIQUEMENT la colonne "Désignation produit". Ignore Prix, CB, Espèces, TOTAL.
+Marques :
+- "sunProject" : shorts homme. itemKey = coloris exact (Gaufre Kaki, Turtles Bleue, Noir, etc.)
+- "bam" : Triangle, Bandeau Souple, Bandeau Dur, SG GT, Culotte Normale, Culotte Nœud, Culotte GT, Tanga, Shorty + couleur (Grecque=Grec, Motif Rose=Tropical/Fleur, Motif Vert=Vert Feuille, etc.)
+- "lagonBleue" : modèles nommés (Léa, Maya, Lili, Marilyn, Britt, Anita, Nathalie, Cécilia, Cécile, etc.) tailles numériques T34-T52. Pour 2P précise piece: haut/bas/ensemble
 
-RÈGLE ABSOLUE : l'itemKey que tu retournes DOIT être choisi EXACTEMENT dans les listes ci-dessous. Ne jamais inventer un itemKey. Si tu ne peux pas associer à un itemKey exact → brand="unknown".
-
-━━━ BAM HAUTS (brand=bam, section=hauts) ━━━
-${BAM_HAUTS_KEYS.join(', ')}
-
-━━━ BAM BAS (brand=bam, section=bas) ━━━
-${BAM_BAS_KEYS.join(', ')}
-
-━━━ SUN PROJECT shorts (brand=sunProject) ━━━
-${SUN_KEYS.join(', ')}
-
-━━━ LAGON BLEUE — itemKey = NOM DU COLORIS (brand=lagonBleue) ━━━
-Modèles (pour info seulement, pas l'itemKey) : ${LAGON_KEYS.join(', ')}
-itemKey = le coloris : Marine, Noir, Kaki, Cannelle, Royal, Emeraude, Choco, Blanc, Rose, Peche, St Trop R, Ramatuelle M, etc.
-
-━━━ CORRESPONDANCES ÉCRITURE MANUSCRITE ━━━
-Type d'article BAM :
-"GT" seul avec couleur → SG GT - [couleur] (section=hauts)
-"Haut GT" → SG GT - [couleur] (section=hauts)
-"Bandeau" sans précision → Bandeau Souple - [couleur] (section=hauts)
-"Culotte" sans précision → Culotte Normale - [couleur] (section=bas)
-"Culotte Haute/Hte" → Culotte GT - [couleur] (section=bas)
-"Culotte Nœud/Noud/Noeu" → Culotte Nœud - [couleur] (section=bas)
-
-Couleur BAM (manuscrit → nom exact dans les clés) :
-"Grec/Grecs/Gaulre Grec/Gaufre Grec" → Grecque
-"Elec/Electr/Bleu elec/Bleue elec/Bleu Electr" → Electrique
-"Bleu marine/Bleue marine/Marine/Mar" → Marine
-"Tropical/Fleur/Motif rose/Tropicol" → Motif Rose
-"Vert feuille/Vert Feui/Motif vert/Vert gaufre" → Motif Vert
-"Lurex bleu/Lurex bleue/LX bleu" → Lurex Bleue
-"Lurex kaki/LX kaki" → Lurex Kaki
-"Lurex marron/LX marron" → Lurex Marron
-"Marron kaki" → Marron
-"Blanc/White" → Blanc | "Noir/Black" → Noir | "Kaki" → Kaki
-"Rose" → Rose | "Jaune" → Jaune | "Marron" → Marron | "Léopard/Leopard" → Léopard
-
-Tailles BAM : S, M, L, XL, 2XL (XXL=2XL)
-Tailles Sun Project : S, M, L, XL, 2XL, 3XL, 4XL
-Tailles Lagon Bleue : T34, T36, T38, T40, T42, T44, T46, T48, T50, T52
-
-SI UNE LIGNE CONTIENT "+" → crée UNE entrée par article séparé.
-
-Format JSON — un objet par article vendu :
-[{"raw":"texte original","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"EXACTEMENT une clé des listes ci-dessus","section":"hauts|bas","size":"M|T38|2XL","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"si pas high: raison précise"}]
-
-Réponds UNIQUEMENT avec le tableau JSON valide, sans markdown.`;
+Réponds UNIQUEMENT JSON valide, tableau:
+[{"raw":"texte","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"clé exacte","size":"M|T38","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"si pas high"}]`;
 
   try {
     const res = await fetch('/api/analyze', {
@@ -943,7 +897,7 @@ Réponds UNIQUEMENT avec le tableau JSON valide, sans markdown.`;
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-5',
-        max_tokens:2000,
+        max_tokens:6000,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:mime,data:b64}},
           {type:'text',text:prompt}
@@ -954,7 +908,15 @@ Réponds UNIQUEMENT avec le tableau JSON valide, sans markdown.`;
     if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
     if(!data.content) throw new Error('Réponse invalide: '+JSON.stringify(data));
     const text = data.content.map(x=>x.text||'').join('');
-    scanLines = JSON.parse(text.replace(/```json|```/g,'').trim());
+    let cleanText = text.replace(/```json|```/g,'').trim();
+    // Si JSON tronqué, tenter de le réparer
+    if(!cleanText.endsWith(']')){
+      const lastComma = cleanText.lastIndexOf(',{"raw');
+      const lastOk = cleanText.lastIndexOf('}');
+      if(lastOk > 0) cleanText = cleanText.substring(0, lastOk+1) + ']';
+      else cleanText += ']';
+    }
+    scanLines = JSON.parse(cleanText);
     scanLines = scanLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
     renderScanReview();
   } catch(e) {
@@ -1016,46 +978,6 @@ function renderScanLine(l,i){
 function setScanStatus(i, status){
   scanLines[i].status = status;
   renderScanReview();
-}
-
-function normalizeItemKey(brand, section, itemKey){
-  if(!itemKey) return itemKey;
-  // Chercher la clé la plus proche dans le stock réel
-  if(brand==='sunProject'){
-    const keys = Object.keys(stock.sunProject.items);
-    const exact = keys.find(k=>k.toLowerCase()===itemKey.toLowerCase());
-    if(exact) return exact;
-    const partial = keys.find(k=>k.toLowerCase().includes(itemKey.toLowerCase())||itemKey.toLowerCase().includes(k.toLowerCase()));
-    return partial || itemKey;
-  }
-  if(brand==='bam'){
-    const sections = section==='bas'?['bas']:section==='hauts'?['hauts']:['hauts','bas'];
-    for(const sec of sections){
-      const keys = Object.keys(stock.bam[sec]);
-      const exact = keys.find(k=>k.toLowerCase()===itemKey.toLowerCase());
-      if(exact) return exact;
-      // Correspondance partielle : "SG GT - Grecque" vs "GT Grec"
-      const partial = keys.find(k=>{
-        const kl=k.toLowerCase(), il=itemKey.toLowerCase();
-        return kl.includes(il)||il.includes(kl)||
-          // Correspondances spéciales
-          (il.includes('grec')&&kl.includes('grecque'))||
-          (il.includes('elec')&&kl.includes('electrique'))||
-          (il.includes('tropical')&&kl.includes('motif rose'))||
-          (il.includes('vert feuil')&&kl.includes('motif vert'))||
-          (il.includes('lurex bleu')&&kl.includes('lurex bleue'));
-      });
-      if(partial) return partial;
-    }
-  }
-  if(brand==='lagonBleue'){
-    for(const catData of Object.values(stock.lagonBleue.categories)){
-      const keys = Object.keys(catData.items);
-      const exact = keys.find(k=>k.toLowerCase()===itemKey.toLowerCase());
-      if(exact) return exact;
-    }
-  }
-  return itemKey;
 }
 
 function confirmScan(){
@@ -1183,7 +1105,7 @@ async function analyzeReception(){
   };
   try{
     const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:6000,
         messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompts[recBrand]+'\nRéponds UNIQUEMENT JSON valide, tableau, sans markdown.'}]}]})});
     const data=await res.json();
     const text=data.content.map(x=>x.text||'').join('');
