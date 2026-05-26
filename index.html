@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>Stock Maillot</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+:root{--pink:#f43f8e;--orange:#f97316;--blue:#0ea5e9;--green:#22c55e;--red:#ef4444}
+header{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:11px 14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-title{font-weight:800;font-size:16px;letter-spacing:-0.5px}
+.logo-sub{font-size:10px;color:#94a3b8;text-transform:uppercase}
+.btn-scan{background:linear-gradient(135deg,var(--pink),var(--orange));color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-alert{background:#fef2f2;color:#dc2626;border:1.5px solid #fca5a5;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-export{background:#f0fdf4;color:#16a34a;border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-reception{background:#eff6ff;color:#2563eb;border:1.5px solid #93c5fd;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.header-btns{display:flex;gap:6px;flex-wrap:wrap}
+nav{display:flex;gap:2px;padding:0 10px 8px;overflow-x:auto}
+.nav-btn{background:none;border:none;padding:6px 11px;border-radius:8px;font-size:12px;cursor:pointer;color:#64748b;font-weight:600;white-space:nowrap;font-family:'Outfit',sans-serif}
+.nav-btn.active{background:#f1f5f9;color:#0f172a;font-weight:800}
+.nav-add{color:#22c55e!important;font-weight:700!important}
+main{padding:14px 12px;max-width:700px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-title{font-weight:700;font-size:13px;margin-bottom:10px}
+.stat-emoji{font-size:22px;margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:800}
+.stat-label{font-size:11px;color:#94a3b8}
+.empty{color:#94a3b8;font-size:13px;text-align:center;padding:14px 0}
+.row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#f8fafc;border-radius:7px;margin-bottom:4px}
+.page-title{margin:0 0 14px;font-size:18px;font-weight:800}
+.cat-nav{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.cat-btn{background:#f1f5f9;border:none;border-radius:8px;padding:6px 11px;font-size:11px;cursor:pointer;font-weight:600;color:#64748b;font-family:'Outfit',sans-serif}
+.cat-btn.active{background:#0f172a;color:#fff}
+.sub-nav{display:flex;gap:8px;margin-bottom:12px}
+.sub-btn{border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;color:#64748b;font-family:'Outfit',sans-serif}
+.sub-btn.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.search{width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;outline:none;margin-bottom:10px;font-family:'Outfit',sans-serif}
+.block{background:#fff;border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);border-left:3px solid #e2e8f0}
+.block.alert-warn{border-left-color:#f59e0b}
+.block-name{font-weight:700;font-size:14px;color:#0f172a;padding:11px 14px 8px;border-bottom:1px solid #f1f5f9}
+.block-body{padding:8px 14px 12px}
+.row-hdr,.size-row{display:grid;gap:4px;padding:4px 0}
+.row-hdr{border-bottom:1px solid #f1f5f9;margin-bottom:4px;padding-bottom:6px}
+.grid-1p{grid-template-columns:56px 1fr 1fr 1fr}
+.grid-2p{grid-template-columns:56px 1fr 1fr 1fr 1fr 1fr}
+.col1{font-size:13px;font-weight:600;color:#334155;display:flex;align-items:center}
+.col-data{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#94a3b8}
+.badge{padding:3px 7px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.badge-ok{background:#f0fdf4;color:#16a34a}
+.badge-warn{background:#fef9c3;color:#d97706}
+.badge-err{background:#fef2f2;color:#dc2626}
+.edit-val{cursor:pointer;padding:2px 7px;border-radius:5px;background:#f1f5f9;font-size:13px;font-weight:600}
+.cell-inp{width:40px;text-align:center;border:1.5px solid var(--blue);border-radius:6px;padding:2px 3px;font-size:12px;outline:none;font-family:'Outfit',sans-serif}
+.row-bg-ok{background:#fff}
+.row-bg-warn{background:#fffbeb}
+.row-bg-err{background:#fef2f2}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:1000}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:93vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f1f5f9}
+.modal-hdr h3{font-weight:800;font-size:16px}
+.close-btn{background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;font-family:'Outfit',sans-serif}
+.modal-body{overflow-y:auto;flex:1;padding:14px 16px}
+.modal-footer{padding:10px 12px;border-top:1px solid #f1f5f9;display:flex;gap:8px}
+.btn-cancel{flex:1;background:#f1f5f9;color:#64748b;border:none;border-radius:10px;padding:12px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-confirm{flex:2;background:linear-gradient(135deg,var(--green),var(--blue));color:#fff;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.label{font-size:12px;font-weight:700;color:#64748b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;display:block}
+.inp{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;width:100%;font-family:'Outfit',sans-serif}
+select.inp{background:#fff}
+.toggle-group{display:flex;gap:8px;flex-wrap:wrap}
+.toggle-btn{background:#f1f5f9;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600;color:#64748b;font-family:'Outfit',sans-serif}
+.toggle-btn.active{background:#0f172a;color:#fff}
+.info-box{background:#f0fdf4;border-radius:10px;padding:12px;font-size:13px;color:#166534;line-height:1.5;margin-bottom:12px}
+.scan-textarea{width:100%;height:180px;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:12px;font-family:monospace;outline:none;resize:none}
+.line-card{background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid #e2e8f0}
+.line-card.ok{border-left-color:var(--green)}
+.line-card.warn{border-left-color:#f59e0b}
+.line-card.err{border-left-color:var(--red)}
+.line-top{display:flex;justify-content:space-between;margin-bottom:6px;gap:8px}
+.line-raw{font-size:13px;font-weight:600;font-style:italic;color:#334155;flex:1}
+.line-btns{display:flex;gap:4px;flex-shrink:0}
+.btn-ok-sm{background:var(--green);color:#fff;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-weight:700;font-size:14px}
+.btn-ign-sm{background:#e2e8f0;color:#64748b;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-weight:700}
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.pill{background:#e2e8f0;color:#475569;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+.issue-box{font-size:11px;color:#92400e;background:#fef9c3;padding:3px 8px;border-radius:6px;margin:0 0 6px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.line-inp{border:1.5px solid #e2e8f0;border-radius:6px;padding:4px 7px;font-size:11px;outline:none;font-family:'Outfit',sans-serif}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:#f0fdf4;color:#166534;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.chip-warn{background:#fef9c3;color:#92400e}
+.chip-err{background:#fef2f2;color:#991b1b}
+.alert-item{border-radius:8px;padding:7px 12px;margin-bottom:5px;display:flex;justify-content:space-between;font-size:13px}
+.alert-item.rupture{background:#fef2f2}
+.alert-item.faible{background:#fef9c3}
+.spinner{width:38px;height:38px;border:3px solid #f1f5f9;border-top:3px solid var(--pink);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.analyzing{padding:40px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.upload-box{width:100%;min-height:160px;border:2px dashed #e2e8f0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#f8fafc;padding:16px;margin-bottom:12px}
+.upload-box img{max-width:100%;max-height:240px;border-radius:8px;object-fit:contain}
+.upload-icon{font-size:36px;margin-bottom:8px}
+.btn-analyze{background:linear-gradient(135deg,var(--pink),var(--orange));color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;width:100%;font-family:'Outfit',sans-serif}
+.hidden{display:none}
+.full-col{grid-column:1/-1}
+.add-size-row{display:grid;grid-template-columns:1fr 1fr 30px;gap:6px;margin-bottom:6px}
+.btn-del-size{background:#fef2f2;border:none;border-radius:6px;cursor:pointer;color:var(--red);font-weight:700;font-family:'Outfit',sans-serif}
+.btn-add-size{background:#f1f5f9;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600;font-family:'Outfit',sans-serif}
+.msg-ok{text-align:center;font-weight:700;color:var(--green);font-size:13px}
+.msg-err{text-align:center;font-weight:700;color:var(--red);font-size:13px}
+.review-area{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.lines-list{flex:1;overflow-y:auto;padding:10px 12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo">
+      <span style="font-size:24px">👙</span>
+      <div>
+        <div class="logo-title">STOCK MAILLOT</div>
+        <div class="logo-sub">Gestion de stock</div>
+      </div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-alert hidden" id="btnAlert" onclick="showAlerts()">🔔 0</button>
+      <button class="btn-reception" onclick="showReception()">📦</button>
+      <button class="btn-export" onclick="exportCSV()">📥</button>
+      <button class="btn-scan" onclick="showScan()">📸 Scanner</button>
+    </div>
+  </div>
+  <nav>
+    <button class="nav-btn active" onclick="setTab('dashboard')">📊</button>
+    <button class="nav-btn" onclick="setTab('sun')">🏄 Sun Project</button>
+    <button class="nav-btn" onclick="setTab('lagon')">🌊 Lagon Bleue</button>
+    <button class="nav-btn" onclick="setTab('bam')">👙 BAM</button>
+    <button class="nav-btn nav-add" onclick="showAdd()">＋ Ajouter</button>
+  </nav>
+</header>
+<main id="main"></main>
+
+<!-- MODALS -->
+<div id="scanModal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>📸 Scanner la feuille de caisse</h3>
+      <button class="close-btn" onclick="hideScan()">✕</button>
+    </div>
+    <div id="scanContent" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="info-box">
+        <strong>Comment faire :</strong><br>
+        1. Prends en photo ta feuille de caisse<br>
+        2. L'IA lit chaque ligne automatiquement<br>
+        3. Tu valides et le stock se met à jour
+      </div>
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()" id="uploadBox">
+        <div class="upload-icon">📄</div>
+        <p style="font-weight:600;margin-bottom:4px">Appuie ici pour prendre la photo</p>
+        <p style="font-size:12px;color:#94a3b8">ou glisse ton image ici</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="handleFile(this)">
+      <button class="btn-analyze hidden" id="btnAnalyze" onclick="analyzeScan()">🔍 Analyser la feuille</button>
+    </div>
+  </div>
+</div>
+
+<div id="alertModal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>🔔 Alertes stock</h3>
+      <button class="close-btn" onclick="hideAlerts()">✕</button>
+    </div>
+    <div class="modal-body" id="alertContent"></div>
+  </div>
+</div>
+
+<div id="addModal" class="overlay hidden">
+  <div class="modal" style="max-height:90vh">
+    <div class="modal-hdr">
+      <h3>➕ Ajouter un article</h3>
+      <button class="close-btn" onclick="hideAdd()">✕</button>
+    </div>
+    <div class="modal-body" id="addContent"></div>
+    <div class="modal-footer">
+      <button class="btn-confirm" style="flex:1" onclick="saveAdd()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="receptionModal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>📦 Réception livraison</h3>
+      <button class="close-btn" onclick="hideReception()">✕</button>
+    </div>
+    <div id="receptionContent" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <span class="label">Marque</span>
+        <div class="toggle-group">
+          <button class="toggle-btn active" onclick="setRecBrand('lagonBleue',this)">🌊 Lagon Bleue</button>
+          <button class="toggle-btn" onclick="setRecBrand('bam',this)">👙 BAM</button>
+          <button class="toggle-btn" onclick="setRecBrand('sunProject',this)">🏄 Sun Project</button>
+        </div>
+      </div>
+      <div class="upload-box" onclick="document.getElementById('recFileInput').click()" id="recUploadBox">
+        <div class="upload-icon">📄</div>
+        <p style="font-weight:600;margin-bottom:4px">Photo du bon de livraison</p>
+        <p style="font-size:12px;color:#94a3b8">JPG, PNG acceptés</p>
+      </div>
+      <input type="file" id="recFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleRecFile(this)">
+      <button class="btn-analyze hidden" id="btnRecAnalyze" onclick="analyzeReception()">🔍 Analyser le bon</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DONNÉES
+// ═══════════════════════════════════════════════════════════
+const INITIAL = {
+  sunProject:{items:{
+    "Bleu Electrique":{S:{i:2,s:0},M:{i:4,s:2},L:{i:6,s:2},XL:{i:5,s:1},"2XL":{i:2,s:0}},
+    "Corail Fluo":{S:{i:2,s:0},M:{i:4,s:1},L:{i:6,s:1},XL:{i:5,s:1},"2XL":{i:2,s:0}},
+    "Kaki":{S:{i:2,s:2},M:{i:4,s:5},L:{i:6,s:3},XL:{i:5,s:1},"2XL":{i:2,s:2}},
+    "Bleue Ciel":{S:{i:2,s:0},M:{i:4,s:1},L:{i:6,s:0},XL:{i:5,s:2},"2XL":{i:2,s:1}},
+    "Jaune Fluo":{S:{i:2,s:0},M:{i:4,s:0},L:{i:6,s:0},XL:{i:5,s:0},"2XL":{i:2,s:0}},
+    "Beige Gris":{S:{i:2,s:0},M:{i:4,s:0},L:{i:6,s:0},XL:{i:5,s:1},"2XL":{i:2,s:1}},
+    "Vertdeau":{S:{i:2,s:1},M:{i:4,s:2},L:{i:6,s:1},XL:{i:5,s:2},"2XL":{i:2,s:0}},
+    "Noir":{S:{i:2,s:1},M:{i:4,s:3},L:{i:6,s:2},XL:{i:5,s:2},"2XL":{i:2,s:1}},
+    "Rayure Gris Blanc":{S:{i:2,s:0},M:{i:4,s:0},L:{i:6,s:0},XL:{i:5,s:1},"2XL":{i:2,s:0}},
+    "Rayure Rouge Blanc":{S:{i:2,s:1},M:{i:4,s:2},L:{i:6,s:1},XL:{i:5,s:2},"2XL":{i:2,s:0}},
+    "Gaufre Vert":{S:{i:2,s:0},M:{i:4,s:2},L:{i:6,s:5},XL:{i:5,s:3},"2XL":{i:2,s:0}},
+    "Turtles Bleue":{S:{i:2,s:2},M:{i:4,s:5},L:{i:6,s:7},XL:{i:5,s:5},"2XL":{i:2,s:0}},
+    "Hibiscus Flash":{S:{i:2,s:1},M:{i:4,s:0},L:{i:6,s:5},XL:{i:5,s:1},"2XL":{i:2,s:0}},
+    "Gaufre Bleue":{S:{i:2,s:0},M:{i:4,s:2},L:{i:6,s:10},XL:{i:5,s:4},"2XL":{i:2,s:1}},
+    "Gaufre Marine":{S:{i:2,s:1},M:{i:4,s:1},L:{i:6,s:2},XL:{i:5,s:0},"2XL":{i:2,s:1}},
+    "Gaufre Kaki":{S:{i:2,s:0},M:{i:4,s:2},L:{i:6,s:4},XL:{i:5,s:2},"2XL":{i:2,s:1}},
+    "Rose Pale":{S:{i:2,s:0},M:{i:4,s:1},L:{i:6,s:0},XL:{i:5,s:2},"2XL":{i:2,s:1}},
+    "Fleur Blanche":{S:{i:2,s:1},M:{i:4,s:0},L:{i:6,s:3},XL:{i:5,s:0},"2XL":{i:2,s:0}},
+    "Kaki GT":{"3XL":{i:2,s:1},"4XL":{i:2,s:2}},
+    "Noir GT":{"3XL":{i:2,s:0},"4XL":{i:2,s:0}},
+    "Bleue Ciel GT":{"3XL":{i:2,s:0},"4XL":{i:2,s:2}}
+  }},
+  lagonBleue:{categories:{
+    "2P - Léa Uni":{type:"2p",items:{
+      "Cannelle":{T34:{i:3,sh:0,sb:0},T36:{i:4,sh:0,sb:0},T38:{i:3,sh:1,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Choco":{T34:{i:2,sh:0,sb:0},T36:{i:4,sh:0,sb:0},T38:{i:3,sh:1,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Royal Elec":{T34:{i:3,sh:0,sb:0},T36:{i:4,sh:1,sb:0},T38:{i:2,sh:0,sb:1},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Marine":{T34:{i:2,sh:0,sb:0},T36:{i:4,sh:0,sb:1},T38:{i:4,sh:0,sb:0},T40:{i:2,sh:1,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Noir":{T34:{i:2,sh:0,sb:1},T36:{i:4,sh:0,sb:1},T38:{i:3,sh:0,sb:0},T40:{i:3,sh:1,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Blanc":{T34:{i:2,sh:0,sb:0},T36:{i:4,sh:0,sb:2},T38:{i:3,sh:1,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Rose":{T34:{i:3,sh:0,sb:1},T36:{i:4,sh:1,sb:0},T38:{i:2,sh:0,sb:1},T40:{i:4,sh:0,sb:2},T42:{i:1,sh:0,sb:0}}
+    }},
+    "2P - Léa Gold":{type:"2p",items:{
+      "Emeraude":{T34:{i:3,sh:1,sb:0},T36:{i:4,sh:1,sb:1},T38:{i:2,sh:0,sb:2},T40:{i:4,sh:1,sb:0},T42:{i:3,sh:0,sb:1}},
+      "Kaki":{T34:{i:2,sh:1,sb:1},T36:{i:6,sh:0,sb:5},T38:{i:3,sh:0,sb:1},T40:{i:2,sh:1,sb:0},T42:{i:1,sh:0,sb:0}},
+      "Cannelle":{T34:{i:2,sh:0,sb:0},T36:{i:4,sh:1,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:3,sh:0,sb:1}},
+      "Choco":{T34:{i:2,sh:0,sb:1},T36:{i:4,sh:1,sb:0},T38:{i:3,sh:1,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:3,sh:0,sb:0}},
+      "Royal Gold":{T34:{i:3,sh:0,sb:0},T36:{i:4,sh:1,sb:0},T38:{i:2,sh:0,sb:0},T40:{i:2,sh:0,sb:1},T42:{i:1,sh:0,sb:0}}
+    }},
+    "2P - Léa Tanga":{type:"2p",items:{
+      "Choco":{T34:{i:3,sh:0,sb:0},T36:{i:3,sh:0,sb:0},T38:{i:3,sh:1,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:1}},
+      "Peche":{T34:{i:3,sh:0,sb:0},T36:{i:3,sh:0,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:2,sh:0,sb:0},T42:{i:1,sh:0,sb:0}}
+    }},
+    "2P - Laetitia MG":{type:"2p",items:{
+      "Royal":{T36:{i:1,sh:0,sb:0},T38:{i:2,sh:1,sb:0},T40:{i:2,sh:0,sb:1},T42:{i:2,sh:0,sb:0},T44:{i:1,sh:0,sb:0}},
+      "Bleue":{T36:{i:3,sh:0,sb:1},T38:{i:4,sh:1,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:3,sh:0,sb:0},T44:{i:1,sh:0,sb:0}}
+    }},
+    "2P - Inès":{type:"2p",items:{
+      "Marine":{T36:{i:1,sh:0,sb:0},T38:{i:2,sh:0,sb:0},T40:{i:4,sh:1,sb:2},T42:{i:4,sh:1,sb:0},T44:{i:2,sh:1,sb:0},T46:{i:1,sh:0,sb:1}},
+      "Noir":{T36:{i:1,sh:0,sb:0},T38:{i:2,sh:0,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:3,sh:0,sb:3},T44:{i:2,sh:1,sb:0},T46:{i:1,sh:0,sb:1}},
+      "Cannelle":{T36:{i:1,sh:0,sb:0},T38:{i:2,sh:0,sb:0},T40:{i:3,sh:1,sb:0},T42:{i:3,sh:0,sb:1},T44:{i:2,sh:1,sb:0},T46:{i:1,sh:0,sb:1}}
+    }},
+    "2P - Lolita":{type:"2p",items:{
+      "Marine":{T36:{i:1,sh:1,sb:0},T38:{i:3,sh:2,sb:1},T40:{i:3,sh:1,sb:1},T42:{i:3,sh:0,sb:2},T44:{i:2,sh:0,sb:0}}
+    }},
+    "2P - Ramatuelle M":{type:"2p",items:{
+      "Marine":{T36:{i:1,sh:0,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:3,sh:0,sb:0},T44:{i:2,sh:0,sb:0}}
+    }},
+    "2P - St Trop":{type:"2p",items:{
+      "Noir":{T36:{i:1,sh:0,sb:0},T38:{i:2,sh:1,sb:1},T40:{i:3,sh:0,sb:1},T42:{i:3,sh:0,sb:0},T44:{i:2,sh:0,sb:0},T46:{i:1,sh:0,sb:0}},
+      "Kaki":{T36:{i:1,sh:0,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:3,sh:0,sb:0},T44:{i:2,sh:0,sb:0}}
+    }},
+    "2P - Laurie Gold":{type:"2p",items:{
+      "Emeraude":{T36:{i:2,sh:1,sb:0},T38:{i:3,sh:0,sb:1},T40:{i:3,sh:0,sb:1},T42:{i:2,sh:0,sb:2},T44:{i:2,sh:1,sb:0}},
+      "Noir":{T36:{i:1,sh:0,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:2,sh:1,sb:1},T44:{i:2,sh:1,sb:0},T46:{i:1,sh:0,sb:0}},
+      "Choco":{T36:{i:1,sh:0,sb:0},T38:{i:3,sh:0,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:2,sh:0,sb:0},T44:{i:2,sh:0,sb:0},T46:{i:1,sh:0,sb:0}},
+      "Royal":{T36:{i:2,sh:0,sb:2},T38:{i:3,sh:1,sb:1},T40:{i:3,sh:0,sb:0},T42:{i:2,sh:1,sb:0},T44:{i:2,sh:0,sb:1}}
+    }},
+    "2P - Lili Ramatuelle":{type:"2p",items:{
+      "Marine":{T38:{i:2,sh:1,sb:0},T40:{i:3,sh:0,sb:0},T42:{i:3,sh:0,sb:0},T44:{i:3,sh:0,sb:0},T46:{i:1,sh:0,sb:0}}
+    }},
+    "2P - Lili St Trop":{type:"2p",items:{
+      "Noir":{T38:{i:2,sh:0,sb:2},T40:{i:3,sh:3,sb:0},T42:{i:3,sh:0,sb:1},T44:{i:3,sh:0,sb:0},T46:{i:1,sh:0,sb:1}},
+      "Royal":{T38:{i:2,sh:1,sb:0},T40:{i:3,sh:0,sb:1},T42:{i:3,sh:0,sb:0},T44:{i:3,sh:0,sb:0},T46:{i:1,sh:0,sb:1}}
+    }},
+    "1P - Perrine G":{type:"1p",items:{
+      "Marine":{T36:{i:1,s:0},T38:{i:3,s:0},T40:{i:3,s:0},T42:{i:2,s:0},T44:{i:2,s:0},T46:{i:1,s:0}}
+    }},
+    "1P - Maya":{type:"1p",items:{
+      "Choco":{T36:{i:3,s:0},T38:{i:3,s:0},T40:{i:3,s:0},T42:{i:2,s:0},T44:{i:1,s:1}},
+      "Kaki":{T36:{i:3,s:1},T38:{i:3,s:1},T40:{i:4,s:1},T42:{i:4,s:2},T44:{i:1,s:0}},
+      "Royal":{T34:{i:2,s:0},T36:{i:3,s:0},T38:{i:3,s:2},T40:{i:3,s:2},T42:{i:1,s:1}},
+      "Marine":{T36:{i:3,s:0},T38:{i:4,s:2},T40:{i:3,s:2},T42:{i:3,s:1},T44:{i:3,s:1}},
+      "Noir":{T36:{i:3,s:1},T38:{i:3,s:2},T40:{i:3,s:2},T42:{i:2,s:0},T44:{i:1,s:0}},
+      "Peche":{T34:{i:2,s:0},T36:{i:3,s:0},T38:{i:3,s:1},T40:{i:3,s:0},T42:{i:1,s:1}}
+    }},
+    "1P - Marilyn Marin":{type:"1p",items:{
+      "Bleue":{T36:{i:2,s:0},T38:{i:3,s:1},T40:{i:3,s:1},T42:{i:3,s:0},T44:{i:1,s:0}},
+      "Royal":{T36:{i:2,s:1},T38:{i:3,s:4},T40:{i:3,s:2},T42:{i:3,s:0},T44:{i:1,s:1}},
+      "Choco":{T36:{i:2,s:0},T38:{i:3,s:0},T40:{i:3,s:1},T42:{i:3,s:0},T44:{i:1,s:0}}
+    }},
+    "1P - Britt":{type:"1p",items:{
+      "St Trop R":{T36:{i:2,s:0},T38:{i:3,s:0},T40:{i:1,s:1},T42:{i:3,s:0},T44:{i:1,s:0}}
+    }},
+    "1P - Anita Gaufre":{type:"1p",items:{
+      "Marine":{T36:{i:1,s:1},T38:{i:2,s:1},T40:{i:3,s:0},T42:{i:3,s:0},T44:{i:2,s:0},T46:{i:1,s:0}},
+      "Cannelle":{T36:{i:1,s:0},T38:{i:2,s:0},T40:{i:3,s:0},T42:{i:1,s:0},T44:{i:2,s:0}},
+      "Noir":{T36:{i:1,s:0},T38:{i:2,s:1},T40:{i:3,s:0},T42:{i:3,s:2},T44:{i:2,s:0},T46:{i:1,s:0}}
+    }},
+    "1P - Nathalie":{type:"1p",items:{
+      "Noir":{T38:{i:4,s:4},T40:{i:3,s:0},T42:{i:3,s:1},T44:{i:2,s:0},T46:{i:2,s:0},T48:{i:1,s:0}},
+      "Marine":{T38:{i:4,s:4},T40:{i:2,s:3},T42:{i:4,s:1},T44:{i:2,s:2},T46:{i:3,s:1},T48:{i:1,s:0}},
+      "Cannelle":{T38:{i:2,s:0},T40:{i:2,s:1},T42:{i:3,s:0},T44:{i:2,s:0},T46:{i:2,s:0},T48:{i:1,s:0}},
+      "Ramatuelle M":{T38:{i:2,s:1},T40:{i:3,s:1},T42:{i:4,s:1},T44:{i:3,s:0},T46:{i:2,s:0},T48:{i:1,s:0}},
+      "St Trop R":{T38:{i:2,s:3},T40:{i:3,s:0},T42:{i:4,s:1},T44:{i:3,s:1},T46:{i:2,s:0},T48:{i:1,s:0}}
+    }},
+    "1P - Cécilia":{type:"1p",items:{
+      "Ramatuelle M":{T38:{i:2,s:1},T40:{i:2,s:1},T42:{i:3,s:1},T44:{i:3,s:2},T46:{i:3,s:0},T48:{i:2,s:0}}
+    }},
+    "1P - Cécile":{type:"1p",items:{
+      "St Trop Noir":{T38:{i:1,s:0},T40:{i:2,s:0},T42:{i:3,s:0},T44:{i:3,s:0},T46:{i:3,s:0},T48:{i:2,s:0},T50:{i:1,s:0}}
+    }},
+    "Tankini":{type:"1p",items:{
+      "St Trop Noir":{T38:{i:1,s:0},T40:{i:2,s:0},T42:{i:2,s:0},T44:{i:2,s:0},T46:{i:2,s:1},T48:{i:1,s:0},T50:{i:1,s:0},T52:{i:1,s:0}},
+      "Ramatuelle M":{T38:{i:1,s:0},T40:{i:2,s:0},T42:{i:2,s:0},T44:{i:2,s:0},T46:{i:2,s:0},T48:{i:1,s:0},T50:{i:1,s:0},T52:{i:1,s:0}}
+    }},
+    "Léa Kids Uni":{type:"1p",items:{
+      "Royal":{"3XS":{i:3,s:0},"2XS":{i:4,s:2},XS:{i:5,s:0},S:{i:5,s:1},M:{i:5,s:2}},
+      "Kaki":{"3XS":{i:1,s:0},"2XS":{i:2,s:0},XS:{i:5,s:0},S:{i:5,s:1},M:{i:4,s:1}},
+      "Noir":{"3XS":{i:1,s:0},"2XS":{i:2,s:0},XS:{i:5,s:0},S:{i:5,s:1},M:{i:2,s:0}}
+    }},
+    "Léa Kids Gold":{type:"1p",items:{
+      "Royal":{"3XS":{i:3,s:1},"2XS":{i:4,s:3},XS:{i:5,s:1},S:{i:5,s:3},M:{i:2,s:2}},
+      "Kaki":{"3XS":{i:2,s:1},"2XS":{i:3,s:1},XS:{i:5,s:1},S:{i:5,s:1},M:{i:5,s:3}}
+    }}
+  }},
+  bam:{
+    hauts:{
+      "Bandeau Souple - Grecque":{S:{i:3,s:3},M:{i:7,s:7},L:{i:5,s:3},XL:{i:4,s:0}},
+      "Bandeau Souple - Electrique":{S:{i:6,s:0},M:{i:8,s:3},L:{i:7,s:5},XL:{i:5,s:2}},
+      "Bandeau Souple - Lurex Bleue":{S:{i:5,s:2},M:{i:7,s:1},L:{i:6,s:0},XL:{i:5,s:0}},
+      "Bandeau Souple - Rose":{S:{i:6,s:2},M:{i:6,s:2},L:{i:7,s:0},XL:{i:5,s:1}},
+      "Bandeau Souple - Lurex Kaki":{S:{i:7,s:5},M:{i:8,s:3},L:{i:7,s:1},XL:{i:5,s:0}},
+      "Bandeau Souple - Jaune":{S:{i:4,s:2},M:{i:3,s:1},L:{i:3,s:1},XL:{i:3,s:0}},
+      "Bandeau Souple - Lurex Marron":{S:{i:5,s:2},M:{i:4,s:0},L:{i:6,s:0},XL:{i:5,s:0}},
+      "Bandeau Souple - Noir":{S:{i:6,s:2},M:{i:6,s:2},L:{i:6,s:2},XL:{i:5,s:0}},
+      "Bandeau Dur - Blanc":{S:{i:2,s:0},M:{i:3,s:1},L:{i:3,s:0},XL:{i:2,s:1}},
+      "Bandeau Dur - Grecque":{S:{i:2,s:1},M:{i:2,s:1},L:{i:4,s:1},XL:{i:2,s:1}},
+      "Bandeau Dur - Electrique":{S:{i:4,s:2},M:{i:3,s:1},L:{i:3,s:0},XL:{i:3,s:1}},
+      "Bandeau Dur - Lurex Bleue":{S:{i:2,s:0},M:{i:4,s:2},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Marine":{S:{i:3,s:1},M:{i:3,s:1},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Rose":{S:{i:2,s:0},M:{i:3,s:0},L:{i:3,s:2},XL:{i:2,s:0}},
+      "Bandeau Dur - Motif Rose":{S:{i:2,s:1},M:{i:4,s:2},L:{i:4,s:1},XL:{i:3,s:1}},
+      "Bandeau Dur - Kaki":{S:{i:2,s:0},M:{i:3,s:0},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Lurex Kaki":{S:{i:5,s:0},M:{i:6,s:6},L:{i:6,s:0},XL:{i:5,s:2}},
+      "Bandeau Dur - Motif Vert":{S:{i:2,s:0},M:{i:4,s:3},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Jaune":{S:{i:2,s:0},M:{i:3,s:2},L:{i:3,s:0},XL:{i:2,s:1}},
+      "Bandeau Dur - Lurex Marron":{S:{i:5,s:0},M:{i:6,s:3},L:{i:6,s:0},XL:{i:5,s:1}},
+      "Bandeau Dur - Marron":{S:{i:2,s:0},M:{i:3,s:0},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Noir":{S:{i:2,s:1},M:{i:3,s:1},L:{i:3,s:0},XL:{i:2,s:0}},
+      "Bandeau Dur - Léopard":{S:{i:2,s:1},M:{i:3,s:0},L:{i:3,s:0},XL:{i:2,s:2}},
+      "Triangle - Blanc":{S:{i:6,s:3},M:{i:5,s:1},L:{i:6,s:2},XL:{i:5,s:2},"2XL":{i:3,s:2}},
+      "Triangle - Grecque":{S:{i:6,s:7},M:{i:8,s:8},L:{i:4,s:5},XL:{i:3,s:3},"2XL":{i:4,s:3}},
+      "Triangle - Electrique":{S:{i:5,s:4},M:{i:6,s:5},L:{i:4,s:1},XL:{i:4,s:1},"2XL":{i:4,s:0}},
+      "Triangle - Lurex Bleue":{S:{i:6,s:3},M:{i:5,s:0},L:{i:4,s:1},XL:{i:3,s:1},"2XL":{i:4,s:2}},
+      "Triangle - Marine":{S:{i:7,s:1},M:{i:4,s:4},L:{i:4,s:1},XL:{i:3,s:1},"2XL":{i:3,s:1}},
+      "Triangle - Rose":{S:{i:7,s:6},M:{i:5,s:2},L:{i:5,s:3},XL:{i:4,s:2},"2XL":{i:3,s:0}},
+      "Triangle - Motif Rose":{S:{i:6,s:6},M:{i:4,s:2},L:{i:4,s:4},XL:{i:4,s:1},"2XL":{i:3,s:1}},
+      "Triangle - Kaki":{S:{i:5,s:4},M:{i:4,s:2},L:{i:4,s:1},XL:{i:3,s:0},"2XL":{i:3,s:3}},
+      "Triangle - Lurex Kaki":{S:{i:7,s:2},M:{i:9,s:6},L:{i:8,s:2},XL:{i:7,s:3},"2XL":{i:4,s:0}},
+      "Triangle - Motif Vert":{S:{i:5,s:1},M:{i:4,s:2},L:{i:4,s:3},XL:{i:5,s:3},"2XL":{i:3,s:2}},
+      "Triangle - Jaune":{S:{i:4,s:4},M:{i:6,s:4},L:{i:4,s:0},XL:{i:4,s:0},"2XL":{i:3,s:1}},
+      "Triangle - Lurex Marron":{S:{i:5,s:1},M:{i:7,s:3},L:{i:4,s:1},XL:{i:7,s:0},"2XL":{i:4,s:0}},
+      "Triangle - Marron":{S:{i:4,s:1},M:{i:5,s:1},L:{i:5,s:2},XL:{i:3,s:1},"2XL":{i:3,s:0}},
+      "Triangle - Noir":{S:{i:6,s:2},M:{i:5,s:3},L:{i:5,s:3},XL:{i:6,s:2},"2XL":{i:3,s:3}},
+      "Triangle - Léopard":{XS:{i:4,s:1},S:{i:4,s:0},M:{i:4,s:1},L:{i:4,s:0},XL:{i:3,s:2},"2XL":{i:3,s:0}},
+      "SG GT - Grecque":{M:{i:9,s:4},L:{i:6,s:4},XL:{i:5,s:2},"2XL":{i:5,s:2}},
+      "SG GT - Electrique":{M:{i:7,s:3},L:{i:6,s:1},XL:{i:4,s:2},"2XL":{i:3,s:1}},
+      "SG GT - Lurex Bleue":{M:{i:6,s:0},L:{i:6,s:1},XL:{i:6,s:0},"2XL":{i:3,s:1}},
+      "SG GT - Marine":{M:{i:3,s:1},L:{i:4,s:3},XL:{i:3,s:1},"2XL":{i:3,s:0}},
+      "SG GT - Rose":{M:{i:3,s:0},L:{i:3,s:1},XL:{i:4,s:3},"2XL":{i:3,s:0}},
+      "SG GT - Motif Rose":{M:{i:6,s:4},L:{i:8,s:6},XL:{i:6,s:1},"2XL":{i:3,s:0}},
+      "SG GT - Kaki":{M:{i:6,s:2},L:{i:6,s:1},XL:{i:6,s:3},"2XL":{i:3,s:0}},
+      "SG GT - Lurex Kaki":{M:{i:3,s:0},L:{i:4,s:3},XL:{i:3,s:0},"2XL":{i:3,s:1}},
+      "SG GT - Motif Vert":{M:{i:6,s:2},L:{i:5,s:3},XL:{i:5,s:1},"2XL":{i:3,s:0}},
+      "SG GT - Lurex Marron":{M:{i:3,s:1},L:{i:5,s:2},XL:{i:5,s:2},"2XL":{i:3,s:0}},
+      "SG GT - Marron":{M:{i:3,s:0},L:{i:3,s:0},XL:{i:3,s:0},"2XL":{i:3,s:0}},
+      "SG GT - Noir":{M:{i:6,s:2},L:{i:6,s:1},XL:{i:5,s:1},"2XL":{i:3,s:0}},
+      "SG GT - Léopard":{S:{i:3,s:2},M:{i:3,s:0},L:{i:3,s:2},XL:{i:3,s:0},"2XL":{i:3,s:0}}
+    },
+    bas:{
+      "Culotte Normale - Blanc":{S:{i:4,s:0},M:{i:4,s:0},L:{i:6,s:1},XL:{i:4,s:0}},
+      "Culotte Normale - Grecque":{S:{i:5,s:3},M:{i:8,s:5},L:{i:7,s:4},XL:{i:4,s:2}},
+      "Culotte Normale - Electrique":{S:{i:4,s:0},M:{i:5,s:2},L:{i:4,s:2},XL:{i:4,s:0}},
+      "Culotte Normale - Lurex Bleue":{S:{i:5,s:3},M:{i:5,s:1},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Normale - Marine":{S:{i:4,s:1},M:{i:4,s:3},L:{i:4,s:0},XL:{i:5,s:3}},
+      "Culotte Normale - Rose":{S:{i:7,s:2},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:1}},
+      "Culotte Normale - Motif Rose":{S:{i:5,s:1},M:{i:7,s:4},L:{i:7,s:3},XL:{i:4,s:0}},
+      "Culotte Normale - Kaki":{S:{i:4,s:1},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:1}},
+      "Culotte Normale - Lurex Kaki":{S:{i:8,s:2},M:{i:7,s:3},L:{i:6,s:0},XL:{i:5,s:1}},
+      "Culotte Normale - Motif Vert":{S:{i:4,s:1},M:{i:5,s:1},L:{i:6,s:2},XL:{i:4,s:1}},
+      "Culotte Normale - Jaune":{S:{i:4,s:0},M:{i:4,s:1},L:{i:4,s:0},XL:{i:4,s:1}},
+      "Culotte Normale - Lurex Marron":{S:{i:5,s:1},M:{i:4,s:0},L:{i:6,s:1},XL:{i:4,s:0}},
+      "Culotte Normale - Marron":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Normale - Noir":{S:{i:5,s:1},M:{i:6,s:2},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Normale - Léopard":{S:{i:4,s:1},M:{i:4,s:1},L:{i:4,s:1},XL:{i:4,s:1}},
+      "Culotte Nœud - Blanc":{S:{i:9,s:3},M:{i:8,s:2},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Nœud - Grecque":{S:{i:6,s:5},M:{i:5,s:5},L:{i:4,s:4},XL:{i:4,s:2}},
+      "Culotte Nœud - Electrique":{S:{i:9,s:3},M:{i:10,s:6},L:{i:9,s:3},XL:{i:7,s:0}},
+      "Culotte Nœud - Lurex Bleue":{S:{i:4,s:2},M:{i:4,s:1},L:{i:4,s:2},XL:{i:4,s:0}},
+      "Culotte Nœud - Marine":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Nœud - Rose":{S:{i:7,s:4},M:{i:6,s:1},L:{i:6,s:1},XL:{i:4,s:0}},
+      "Culotte Nœud - Motif Rose":{S:{i:7,s:4},M:{i:7,s:3},L:{i:7,s:2},XL:{i:4,s:0}},
+      "Culotte Nœud - Kaki":{S:{i:7,s:2},M:{i:7,s:0},L:{i:7,s:0},XL:{i:6,s:0}},
+      "Culotte Nœud - Lurex Kaki":{S:{i:7,s:2},M:{i:10,s:7},L:{i:7,s:4},XL:{i:7,s:2}},
+      "Culotte Nœud - Motif Vert":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:1}},
+      "Culotte Nœud - Jaune":{S:{i:6,s:4},M:{i:6,s:4},L:{i:4,s:1},XL:{i:4,s:0}},
+      "Culotte Nœud - Lurex Marron":{S:{i:7,s:3},M:{i:9,s:5},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Nœud - Marron":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Culotte Nœud - Noir":{S:{i:7,s:4},M:{i:7,s:3},L:{i:6,s:1},XL:{i:6,s:2}},
+      "Culotte Nœud - Léopard":{S:{i:4,s:2},M:{i:4,s:2},L:{i:4,s:1},XL:{i:4,s:1}},
+      "Culotte GT - Blanc":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0},"2XL":{i:4,s:0}},
+      "Culotte GT - Grecque":{M:{i:8,s:8},L:{i:6,s:4},XL:{i:7,s:3},"2XL":{i:6,s:3}},
+      "Culotte GT - Electrique":{M:{i:8,s:4},L:{i:8,s:6},XL:{i:7,s:3},"2XL":{i:5,s:3}},
+      "Culotte GT - Lurex Bleue":{M:{i:7,s:2},L:{i:7,s:1},XL:{i:4,s:3},"2XL":{i:5,s:1}},
+      "Culotte GT - Marine":{S:{i:4,s:0},M:{i:4,s:1},L:{i:4,s:1},XL:{i:4,s:1},"2XL":{i:4,s:1}},
+      "Culotte GT - Rose":{M:{i:8,s:2},L:{i:7,s:2},XL:{i:6,s:3},"2XL":{i:5,s:2}},
+      "Culotte GT - Motif Rose":{M:{i:9,s:3},L:{i:8,s:5},XL:{i:7,s:3},"2XL":{i:4,s:1}},
+      "Culotte GT - Kaki":{M:{i:7,s:2},L:{i:6,s:1},XL:{i:5,s:1},"2XL":{i:4,s:0}},
+      "Culotte GT - Lurex Kaki":{M:{i:8,s:2},L:{i:7,s:3},XL:{i:8,s:2},"2XL":{i:6,s:1}},
+      "Culotte GT - Motif Vert":{M:{i:8,s:3},L:{i:6,s:3},XL:{i:5,s:1},"2XL":{i:4,s:1}},
+      "Culotte GT - Lurex Marron":{M:{i:10,s:5},L:{i:7,s:3},XL:{i:4,s:0},"2XL":{i:4,s:0}},
+      "Culotte GT - Marron":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0},"2XL":{i:4,s:0}},
+      "Culotte GT - Noir":{M:{i:7,s:4},L:{i:6,s:1},XL:{i:5,s:1},"2XL":{i:5,s:2}},
+      "Culotte GT - Léopard":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0},"2XL":{i:4,s:0}},
+      "Tanga - Blanc":{S:{i:5,s:3},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Tanga - Grecque":{S:{i:4,s:2},M:{i:4,s:2},L:{i:4,s:2},XL:{i:4,s:1}},
+      "Tanga - Lurex Marine":{S:{i:5,s:1},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Tanga - Marine":{S:{i:4,s:1},M:{i:5,s:2},L:{i:4,s:0},XL:{i:4,s:1}},
+      "Tanga - Rose":{S:{i:6,s:3},M:{i:4,s:0},L:{i:4,s:1},XL:{i:4,s:2}},
+      "Tanga - Motif Rose":{S:{i:4,s:0},M:{i:4,s:3},L:{i:4,s:0},XL:{i:5,s:2}},
+      "Tanga - Kaki":{S:{i:6,s:4},M:{i:4,s:3},L:{i:5,s:3},XL:{i:4,s:0}},
+      "Tanga - Lurex Kaki":{S:{i:4,s:1},M:{i:5,s:2},L:{i:4,s:1},XL:{i:4,s:0}},
+      "Tanga - Motif Vert":{S:{i:4,s:1},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Tanga - Jaune":{S:{i:5,s:3},M:{i:4,s:1},L:{i:5,s:2},XL:{i:4,s:0}},
+      "Tanga - Lurex Marron":{S:{i:4,s:0},M:{i:4,s:0},L:{i:4,s:1},XL:{i:0,s:1}},
+      "Tanga - Marron":{S:{i:5,s:1},M:{i:4,s:0},L:{i:4,s:2},XL:{i:8,s:0}},
+      "Tanga - Noir":{S:{i:4,s:2},M:{i:4,s:1},L:{i:4,s:1},XL:{i:4,s:1}},
+      "Tanga - Léopard":{S:{i:4,s:1},M:{i:4,s:0},L:{i:4,s:0},XL:{i:4,s:0}},
+      "Shorty - Noir":{S:{i:0,s:0},M:{i:0,s:0},L:{i:0,s:0},XL:{i:0,s:0},"2XL":{i:0,s:0}},
+      "Shorty - Marine":{S:{i:0,s:0},M:{i:0,s:0},L:{i:0,s:0},XL:{i:0,s:0},"2XL":{i:0,s:0}},
+      "Shorty - Kaki":{S:{i:0,s:0},M:{i:0,s:0},L:{i:0,s:0},XL:{i:0,s:0},"2XL":{i:0,s:0}}
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let stock = loadStock();
+let sales = loadSales();
+let currentTab = 'dashboard';
+let currentLagonCat = Object.keys(INITIAL.lagonBleue.categories)[0];
+let currentBamSection = 'hauts';
+let scanImg = null;
+let recImg = null;
+let recBrand = 'lagonBleue';
+let scanLines = [];
+let recLines = [];
+let addBrand = 'bam';
+let addSection = 'hauts';
+let addCat = Object.keys(INITIAL.lagonBleue.categories)[0];
+let addCatType = '1p';
+let addNewCat = '';
+let addSizes = [{sz:'S',i:0},{sz:'M',i:0},{sz:'L',i:0},{sz:'XL',i:0}];
+
+function loadStock(){
+  try{const s=localStorage.getItem('stock_v5');return s?JSON.parse(s):JSON.parse(JSON.stringify(INITIAL));}
+  catch{return JSON.parse(JSON.stringify(INITIAL));}
+}
+function loadSales(){
+  try{return JSON.parse(localStorage.getItem('sales_v5')||'[]');}catch{return [];}
+}
+function saveStock(){localStorage.setItem('stock_v5',JSON.stringify(stock));}
+function saveSales(){localStorage.setItem('sales_v5',JSON.stringify(sales));}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+const act1p = c => (c.i||0)-(c.s||0);
+const actH = c => (c.i||0)-(c.sh||0);
+const actB = c => (c.i||0)-(c.sb||0);
+
+function badgeClass(v){
+  if(v<=0) return 'badge badge-err';
+  if(v<=2) return 'badge badge-warn';
+  return 'badge badge-ok';
+}
+function badgeLabel(v){
+  if(v<=0) return '0 🚨';
+  if(v<=2) return v+' ⚠️';
+  return ''+v;
+}
+function rowBgClass(v){
+  if(v<=0) return 'row-bg-err';
+  if(v<=2) return 'row-bg-warn';
+  return 'row-bg-ok';
+}
+
+function buildAlerts(){
+  const res = {'🌊 Lagon Bleue':[],'👙 BAM':[],'🏄 Sun Project':[]};
+  Object.entries(stock.lagonBleue.categories).forEach(([cat,catData])=>{
+    const is2p = catData.type==='2p';
+    Object.entries(catData.items).forEach(([col,szMap])=>{
+      Object.entries(szMap).forEach(([sz,c])=>{
+        if(is2p){
+          const h=actH(c),b=actB(c);
+          if(h<=2) res['🌊 Lagon Bleue'].push({label:`${cat} › ${col} ${sz} (haut)`,v:h});
+          if(b<=2) res['🌊 Lagon Bleue'].push({label:`${cat} › ${col} ${sz} (bas)`,v:b});
+        } else {
+          const v=act1p(c);
+          if(v<=2) res['🌊 Lagon Bleue'].push({label:`${cat} › ${col} ${sz}`,v});
+        }
+      });
+    });
+  });
+  ['hauts','bas'].forEach(sec=>{
+    Object.entries(stock.bam[sec]).forEach(([col,szMap])=>{
+      Object.entries(szMap).forEach(([sz,c])=>{
+        const v=act1p(c);
+        if(v<=2) res['👙 BAM'].push({label:`${col} ${sz}`,v});
+      });
+    });
+  });
+  Object.entries(stock.sunProject.items).forEach(([col,szMap])=>{
+    Object.entries(szMap).forEach(([sz,c])=>{
+      const v=act1p(c);
+      if(v<=2) res['🏄 Sun Project'].push({label:`${col} ${sz}`,v});
+    });
+  });
+  return res;
+}
+
+function updateAlertBtn(){
+  const alerts = buildAlerts();
+  const all = Object.values(alerts).flat();
+  const rupt = all.filter(a=>a.v<=0).length;
+  const faib = all.filter(a=>a.v>0&&a.v<=2).length;
+  const btn = document.getElementById('btnAlert');
+  if(rupt+faib>0){btn.classList.remove('hidden');btn.textContent=`🔔 ${rupt+faib}`;}
+  else btn.classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function setTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    const tabs=['dashboard','sun','lagon','bam'];
+    b.classList.toggle('active', tabs[i]===tab);
+  });
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER PRINCIPAL
+// ═══════════════════════════════════════════════════════════
+function render(){
+  const m = document.getElementById('main');
+  if(currentTab==='dashboard') m.innerHTML = renderDashboard();
+  else if(currentTab==='sun') m.innerHTML = renderSun();
+  else if(currentTab==='lagon') m.innerHTML = renderLagon();
+  else if(currentTab==='bam') m.innerHTML = renderBam();
+  updateAlertBtn();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDashboard(){
+  const today = new Date().toISOString().split('T')[0];
+  const month = today.slice(0,7);
+  const todaySales = sales.filter(s=>s.date===today);
+  const monthSales = sales.filter(s=>s.date&&s.date.startsWith(month));
+  const alerts = buildAlerts();
+  const all = Object.values(alerts).flat();
+  const rupt = all.filter(a=>a.v<=0).length;
+  const faib = all.filter(a=>a.v>0&&a.v<=2).length;
+
+  const top = Object.values(monthSales.reduce((acc,s)=>{
+    const k=s.itemKey||s.raw;
+    if(!acc[k]) acc[k]={...s,count:0};
+    acc[k].count++;
+    return acc;
+  },{})).sort((a,b)=>b.count-a.count).slice(0,5);
+
+  return `<div class="grid">
+    <div class="card" style="border-top:3px solid #f97316">
+      <div class="stat-emoji">🛍️</div>
+      <div class="stat-value" style="color:#f97316">${todaySales.length}</div>
+      <div class="stat-label">Ventes aujourd'hui</div>
+    </div>
+    <div class="card" style="border-top:3px solid #0ea5e9">
+      <div class="stat-emoji">📅</div>
+      <div class="stat-value" style="color:#0ea5e9">${monthSales.length}</div>
+      <div class="stat-label">Ventes ce mois</div>
+    </div>
+    <div class="card full-col" style="border-top:3px solid #ef4444;cursor:pointer" onclick="showAlerts()">
+      <div class="stat-emoji">🚨</div>
+      <div class="stat-value" style="color:#ef4444">${rupt}</div>
+      <div class="stat-label">Ruptures de stock</div>
+      ${faib>0?`<div style="font-size:11px;color:#d97706;margin-top:4px">⚠️ ${faib} stocks faibles</div>`:''}
+    </div>
+    <div class="card full-col">
+      <div class="card-title">🔥 Meilleures ventes du mois</div>
+      ${top.length===0?'<div class="empty">Aucune vente ce mois</div>':top.map((t,i)=>`
+        <div class="row">
+          <span style="font-weight:800;font-size:13px;color:#f97316;min-width:22px">#${i+1}</span>
+          <span style="flex:1;font-size:13px">${t.itemKey||t.raw}</span>
+          <span style="font-size:12px;font-weight:700;color:#64748b">${t.count} vente${t.count>1?'s':''}</span>
+        </div>`).join('')}
+    </div>
+    <div class="card full-col">
+      <div class="card-title">🕐 Ventes d'aujourd'hui</div>
+      ${todaySales.length===0?'<div class="empty">Aucune vente — scannez votre feuille</div>':[...todaySales].reverse().slice(0,10).map(s=>`
+        <div class="row"><span style="flex:1;font-size:13px">${s.raw}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER BLOC 1P
+// ═══════════════════════════════════════════════════════════
+function renderBlock1P(coloris, szMap, brand, section, cat){
+  const sizes = Object.keys(szMap);
+  const hasAlert = sizes.some(sz=>act1p(szMap[sz]||{i:0,s:0})<=2);
+  const id = btoa(encodeURIComponent(coloris)).replace(/[^a-zA-Z0-9]/g,'');
+  return `<div class="block ${hasAlert?'alert-warn':''}" id="blk_${id}">
+    <div class="block-name">${coloris}</div>
+    <div class="block-body">
+      <div class="row-hdr grid-1p">
+        <span class="col1">Taille</span>
+        <span class="col-data" style="color:#94a3b8">INIT</span>
+        <span class="col-data" style="color:#f97316">VENDU</span>
+        <span class="col-data" style="color:#0ea5e9">ACTUEL</span>
+      </div>
+      ${sizes.map(sz=>{
+        const c = szMap[sz]||{i:0,s:0};
+        const v = act1p(c);
+        return `<div class="size-row grid-1p ${rowBgClass(v)}">
+          <span class="col1">${sz}</span>
+          <span class="col-data"><span class="edit-val" onclick="editCell('${brand}','${section||''}','${cat||''}','${coloris}','${sz}','i',this)">${c.i||0}</span></span>
+          <span class="col-data"><span class="edit-val" onclick="editCell('${brand}','${section||''}','${cat||''}','${coloris}','${sz}','s',this)">${c.s||0}</span></span>
+          <span class="col-data"><span class="${badgeClass(v)}">${badgeLabel(v)}</span></span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderBlock2P(coloris, szMap, cat){
+  const sizes = Object.keys(szMap);
+  const hasAlert = sizes.some(sz=>{const c=szMap[sz]||{i:0,sh:0,sb:0};return actH(c)<=2||actB(c)<=2;});
+  return `<div class="block ${hasAlert?'alert-warn':''}">
+    <div class="block-name">${coloris}</div>
+    <div class="block-body">
+      <div class="row-hdr grid-2p">
+        <span class="col1">Taille</span>
+        <span class="col-data" style="color:#94a3b8;font-size:10px">INIT</span>
+        <span class="col-data" style="color:#f97316;font-size:10px">V.H</span>
+        <span class="col-data" style="color:#f97316;font-size:10px">V.B</span>
+        <span class="col-data" style="color:#0ea5e9;font-size:10px">HAUT</span>
+        <span class="col-data" style="color:#ec4899;font-size:10px">BAS</span>
+      </div>
+      ${sizes.map(sz=>{
+        const c = szMap[sz]||{i:0,sh:0,sb:0};
+        const h=actH(c),b=actB(c);
+        const bg = (h<=0||b<=0)?'row-bg-err':(h<=2||b<=2)?'row-bg-warn':'row-bg-ok';
+        return `<div class="size-row grid-2p ${bg}">
+          <span class="col1">${sz}</span>
+          <span class="col-data"><span class="edit-val" onclick="editCell2P('${cat}','${coloris}','${sz}','i',this)">${c.i||0}</span></span>
+          <span class="col-data"><span class="edit-val" onclick="editCell2P('${cat}','${coloris}','${sz}','sh',this)">${c.sh||0}</span></span>
+          <span class="col-data"><span class="edit-val" onclick="editCell2P('${cat}','${coloris}','${sz}','sb',this)">${c.sb||0}</span></span>
+          <span class="col-data"><span class="${badgeClass(h)}">${badgeLabel(h)}</span></span>
+          <span class="col-data"><span class="${badgeClass(b)}">${badgeLabel(b)}</span></span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// EDIT CELLULE
+// ═══════════════════════════════════════════════════════════
+function editCell(brand, section, cat, coloris, sz, field, el){
+  const current = el.textContent.trim().replace(/[^0-9]/g,'');
+  const inp = document.createElement('input');
+  inp.className='cell-inp';inp.type='number';inp.value=current;
+  el.replaceWith(inp);inp.focus();inp.select();
+  const save = ()=>{
+    const n=parseInt(inp.value)||0;
+    if(brand==='sun') stock.sunProject.items[coloris][sz][field]=n;
+    else if(brand==='bam') stock.bam[section][coloris][sz][field]=n;
+    else if(brand==='lagon'){
+      const catData=stock.lagonBleue.categories[cat];
+      catData.items[coloris][sz][field]=n;
+    }
+    saveStock();render();
+  };
+  inp.onblur=save;inp.onkeydown=e=>{if(e.key==='Enter')save();if(e.key==='Escape'){inp.value=current;save();}};
+}
+
+function editCell2P(cat, coloris, sz, field, el){
+  const current = el.textContent.trim().replace(/[^0-9]/g,'');
+  const inp = document.createElement('input');
+  inp.className='cell-inp';inp.type='number';inp.value=current;
+  el.replaceWith(inp);inp.focus();inp.select();
+  const save = ()=>{
+    const n=parseInt(inp.value)||0;
+    stock.lagonBleue.categories[cat].items[coloris][sz][field]=n;
+    saveStock();render();
+  };
+  inp.onblur=save;inp.onkeydown=e=>{if(e.key==='Enter')save();if(e.key==='Escape'){inp.value=current;save();}};
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUN PROJECT
+// ═══════════════════════════════════════════════════════════
+function renderSun(){
+  const items = stock.sunProject.items;
+  return `<h2 class="page-title">🏄 Sun Project — Shorts</h2>
+    <input class="search" placeholder="🔍 Rechercher..." oninput="filterBlocks(this,'sun-blocks')" id="sun-search">
+    <div id="sun-blocks">
+      ${Object.entries(items).map(([col,szMap])=>renderBlock1P(col,szMap,'sun','','')).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LAGON BLEUE
+// ═══════════════════════════════════════════════════════════
+function renderLagon(){
+  const cats = stock.lagonBleue.categories;
+  const catData = cats[currentLagonCat];
+  const is2p = catData.type==='2p';
+  const items = catData.items;
+  return `<h2 class="page-title">🌊 Lagon Bleue</h2>
+    <div class="cat-nav">
+      ${Object.keys(cats).map(k=>`<button class="cat-btn ${k===currentLagonCat?'active':''}" onclick="setLagonCat('${k}')">${k}</button>`).join('')}
+    </div>
+    <input class="search" placeholder="🔍 Rechercher..." oninput="filterBlocks(this,'lagon-blocks')">
+    <div id="lagon-blocks">
+      ${Object.entries(items).map(([col,szMap])=>
+        is2p ? renderBlock2P(col,szMap,currentLagonCat) : renderBlock1P(col,szMap,'lagon','',currentLagonCat)
+      ).join('')}
+    </div>`;
+}
+function setLagonCat(cat){currentLagonCat=cat;render();}
+
+// ═══════════════════════════════════════════════════════════
+// BAM
+// ═══════════════════════════════════════════════════════════
+function renderBam(){
+  const items = stock.bam[currentBamSection];
+  return `<h2 class="page-title">👙 BAM — Bar à Maillot</h2>
+    <div class="sub-nav">
+      <button class="sub-btn ${currentBamSection==='hauts'?'active':''}" onclick="setBamSection('hauts')">👆 Hauts</button>
+      <button class="sub-btn ${currentBamSection==='bas'?'active':''}" onclick="setBamSection('bas')">👇 Bas</button>
+    </div>
+    <input class="search" placeholder="🔍 Rechercher..." oninput="filterBlocks(this,'bam-blocks')">
+    <div id="bam-blocks">
+      ${Object.entries(items).map(([col,szMap])=>renderBlock1P(col,szMap,'bam',currentBamSection,'')).join('')}
+    </div>`;
+}
+function setBamSection(sec){currentBamSection=sec;render();}
+
+// ═══════════════════════════════════════════════════════════
+// FILTER
+// ═══════════════════════════════════════════════════════════
+function filterBlocks(inp, containerId){
+  const q = inp.value.toLowerCase();
+  document.querySelectorAll(`#${containerId} .block`).forEach(b=>{
+    const name = b.querySelector('.block-name').textContent.toLowerCase();
+    b.style.display = name.includes(q)?'':'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALERTES
+// ═══════════════════════════════════════════════════════════
+function showAlerts(){
+  const alerts = buildAlerts();
+  let html = '';
+  Object.entries(alerts).forEach(([brand, items])=>{
+    if(!items.length) return;
+    const rupt = items.filter(a=>a.v<=0);
+    const faib = items.filter(a=>a.v>0&&a.v<=2);
+    html += `<div style="margin-bottom:20px"><div style="font-weight:800;font-size:14px;margin-bottom:8px">${brand}</div>`;
+    if(rupt.length){
+      html += `<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px">🚨 Ruptures</div>`;
+      rupt.forEach(a=>{ html += `<div class="alert-item rupture"><span>${a.label}</span><span style="font-weight:700;color:#dc2626">0 en stock</span></div>`; });
+    }
+    if(faib.length){
+      html += `<div style="font-size:12px;font-weight:700;color:#d97706;margin:8px 0 6px">⚠️ Stocks faibles</div>`;
+      faib.forEach(a=>{ html += `<div class="alert-item faible"><span>${a.label}</span><span style="font-weight:700;color:#d97706">Plus que ${a.v}</span></div>`; });
+    }
+    html += '</div>';
+  });
+  if(!html) html = '<div class="empty">Aucune alerte 🎉</div>';
+  document.getElementById('alertContent').innerHTML = html;
+  document.getElementById('alertModal').classList.remove('hidden');
+}
+function hideAlerts(){document.getElementById('alertModal').classList.add('hidden');}
+
+// ═══════════════════════════════════════════════════════════
+// SCAN
+// ═══════════════════════════════════════════════════════════
+function showScan(){
+  scanImg=null;scanLines=[];
+  resetScanUI();
+  document.getElementById('scanModal').classList.remove('hidden');
+}
+function hideScan(){document.getElementById('scanModal').classList.add('hidden');}
+
+function resetScanUI(){
+  const box = document.getElementById('uploadBox');
+  box.innerHTML = `<div class="upload-icon">📄</div><p style="font-weight:600;margin-bottom:4px">Appuie ici pour prendre la photo</p><p style="font-size:12px;color:#94a3b8">ou glisse ton image ici</p>`;
+  document.getElementById('btnAnalyze').classList.add('hidden');
+  document.getElementById('scanContent').style.display='flex';
+}
+
+function handleFile(inp){
+  const f = inp.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    scanImg = e.target.result;
+    const box = document.getElementById('uploadBox');
+    box.innerHTML = `<img src="${scanImg}" style="max-width:100%;max-height:240px;border-radius:8px;object-fit:contain">`;
+    document.getElementById('btnAnalyze').classList.remove('hidden');
+  };
+  r.readAsDataURL(f);
+}
+
+async function analyzeScan(){
+  if(!scanImg) return;
+  const content = document.getElementById('scanContent');
+  content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">Lecture en cours…</p><p style="font-size:12px;color:#94a3b8">L'IA analyse chaque ligne</p></div>`;
+
+  const b64 = scanImg.split(',')[1];
+  const mime = scanImg.split(';')[0].split(':')[1];
+
+  const prompt = `Tu analyses une feuille de caisse d'un magasin de maillots de bain. Extrait UNIQUEMENT la colonne "Désignation produit". Ignore Prix, CB, Espèces.
+
+Marques :
+- "sunProject" : shorts homme. itemKey = coloris exact (Gaufre Kaki, Turtles Bleue, Noir, etc.)
+- "bam" : Triangle, Bandeau Souple, Bandeau Dur, SG GT, Culotte Normale, Culotte Nœud, Culotte GT, Tanga, Shorty + couleur (Grecque=Grec, Motif Rose=Tropical/Fleur, Motif Vert=Vert Feuille, etc.)
+- "lagonBleue" : modèles nommés (Léa, Maya, Lili, Marilyn, Britt, Anita, Nathalie, Cécilia, Cécile, etc.) tailles numériques T34-T52. Pour 2P précise piece: haut/bas/ensemble
+
+Réponds UNIQUEMENT JSON valide, tableau:
+[{"raw":"texte","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"clé exacte","size":"M|T38","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"si pas high"}]`;
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          {type:'text',text:prompt}
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(x=>x.text||'').join('');
+    scanLines = JSON.parse(text.replace(/```json|```/g,'').trim());
+    scanLines = scanLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
+    renderScanReview();
+  } catch(e) {
+    content.innerHTML = `<div style="padding:20px;text-align:center">
+      <p style="color:#ef4444;font-weight:700;margin-bottom:12px">❌ Erreur lors de l'analyse</p>
+      <p style="font-size:13px;color:#64748b;margin-bottom:16px">${e.message}</p>
+      <button class="btn-analyze" onclick="resetScanUI()">← Réessayer</button>
+    </div>`;
+  }
+}
+
+function renderScanReview(){
+  const confirmed = scanLines.filter(l=>l.status==='confirmed').length;
+  const pending = scanLines.filter(l=>l.status==='pending').length;
+  const error = scanLines.filter(l=>l.status==='error').length;
+
+  const modal = document.querySelector('#scanModal .modal');
+  modal.innerHTML = `
+    <div class="modal-hdr">
+      <h3>📸 Valider les ventes</h3>
+      <button class="close-btn" onclick="hideScan()">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9">
+      <span class="chip">✅ ${confirmed} confirmées</span>
+      ${pending>0?`<span class="chip chip-warn">⚠️ ${pending} à vérifier</span>`:''}
+      ${error>0?`<span class="chip chip-err">❌ ${error} illisibles</span>`:''}
+    </div>
+    <div class="lines-list" id="scanLines">
+      ${scanLines.map((l,i)=>renderScanLine(l,i)).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="hideScan()">Annuler</button>
+      <button class="btn-confirm" onclick="confirmScan()">✅ Valider ${confirmed} vente${confirmed>1?'s':''} → Stock</button>
+    </div>`;
+}
+
+function renderScanLine(l,i){
+  const cls = l.status==='confirmed'?'ok':l.status==='pending'?'warn':'err';
+  const pills = [l.brand,l.itemKey,l.size,l.piece&&l.piece!=='ensemble'?`(${l.piece})`:null].filter(Boolean);
+  return `<div class="line-card ${cls}" id="scanLine_${i}">
+    <div class="line-top">
+      <span class="line-raw">"${l.raw}"</span>
+      <div class="line-btns">
+        ${l.status!=='confirmed'?`<button class="btn-ok-sm" onclick="setScanStatus(${i},'confirmed')">✓</button>`:''}
+        ${l.status!=='ignored'?`<button class="btn-ign-sm" onclick="setScanStatus(${i},'ignored')">✕</button>`:''}
+      </div>
+    </div>
+    <div class="pills">${pills.map(p=>`<span class="pill">${p}</span>`).join('')}</div>
+    ${l.issue?`<div class="issue-box">⚠️ ${l.issue}</div>`:''}
+    ${(l.status==='pending'||l.status==='error')?`
+      <div class="edit-grid" style="margin-top:8px">
+        <input class="line-inp" placeholder="Marque" value="${l.brand||''}" onchange="scanLines[${i}].brand=this.value">
+        <input class="line-inp" placeholder="Article" value="${l.itemKey||''}" onchange="scanLines[${i}].itemKey=this.value">
+        <input class="line-inp" placeholder="Taille" value="${l.size||''}" onchange="scanLines[${i}].size=this.value">
+      </div>`:''}
+  </div>`;
+}
+
+function setScanStatus(i, status){
+  scanLines[i].status = status;
+  renderScanReview();
+}
+
+function confirmScan(){
+  const today = new Date().toISOString().split('T')[0];
+  for(const l of scanLines){
+    if(l.status!=='confirmed') continue;
+    const {brand,itemKey,size,piece,raw} = l;
+    if(brand==='sunProject' && stock.sunProject.items[itemKey]?.[size]){
+      stock.sunProject.items[itemKey][size].s = (stock.sunProject.items[itemKey][size].s||0)+1;
+    } else if(brand==='bam'){
+      if(stock.bam.hauts[itemKey]?.[size]) stock.bam.hauts[itemKey][size].s = (stock.bam.hauts[itemKey][size].s||0)+1;
+      else if(stock.bam.bas[itemKey]?.[size]) stock.bam.bas[itemKey][size].s = (stock.bam.bas[itemKey][size].s||0)+1;
+    } else if(brand==='lagonBleue'){
+      for(const catData of Object.values(stock.lagonBleue.categories)){
+        const cell = catData.items[itemKey]?.[size];
+        if(cell){
+          if(catData.type==='2p'){
+            const p=(piece||'ensemble').toLowerCase();
+            if(p==='haut') cell.sh=(cell.sh||0)+1;
+            else if(p==='bas') cell.sb=(cell.sb||0)+1;
+            else {cell.sh=(cell.sh||0)+1;cell.sb=(cell.sb||0)+1;}
+          } else {
+            cell.s=(cell.s||0)+1;
+          }
+          break;
+        }
+      }
+    }
+    sales.push({date:today,raw,brand,itemKey,size});
+  }
+  saveStock();saveSales();
+  hideScan();render();
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT CSV
+// ═══════════════════════════════════════════════════════════
+function exportCSV(){
+  const date = new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
+  let csv = '';
+  const add1P=(title,items)=>{
+    csv+=`\n${title}\nColoris,Taille,Init,Vendu,Actuel\n`;
+    Object.entries(items).forEach(([col,szMap])=>{
+      Object.entries(szMap).forEach(([sz,c])=>{
+        csv+=`"${col}",${sz},${c.i||0},${c.s||0},${(c.i||0)-(c.s||0)}\n`;
+      });
+    });
+  };
+  const add2P=(title,items)=>{
+    csv+=`\n${title}\nColoris,Taille,Init,V.Haut,V.Bas,Reste Haut,Reste Bas\n`;
+    Object.entries(items).forEach(([col,szMap])=>{
+      Object.entries(szMap).forEach(([sz,c])=>{
+        csv+=`"${col}",${sz},${c.i||0},${c.sh||0},${c.sb||0},${(c.i||0)-(c.sh||0)},${(c.i||0)-(c.sb||0)}\n`;
+      });
+    });
+  };
+  csv+='=== SUN PROJECT ===\n';
+  add1P('Sun Project',stock.sunProject.items);
+  csv+='\n=== LAGON BLEUE ===\n';
+  Object.entries(stock.lagonBleue.categories).forEach(([cat,catData])=>{
+    if(catData.type==='2p') add2P(`Lagon - ${cat}`,catData.items);
+    else add1P(`Lagon - ${cat}`,catData.items);
+  });
+  csv+='\n=== BAM ===\n';
+  add1P('BAM - Hauts',stock.bam.hauts);
+  add1P('BAM - Bas',stock.bam.bas);
+
+  const uri='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  const a=document.createElement('a');
+  a.setAttribute('href',uri);
+  a.setAttribute('download',`Stock_Maillot_${date}.csv`);
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECEPTION LIVRAISON
+// ═══════════════════════════════════════════════════════════
+function showReception(){
+  recImg=null;recLines=[];recBrand='lagonBleue';
+  document.getElementById('receptionModal').classList.remove('hidden');
+}
+function hideReception(){document.getElementById('receptionModal').classList.add('hidden');}
+
+function setRecBrand(b, el){
+  recBrand=b;
+  document.querySelectorAll('#receptionModal .toggle-btn').forEach(btn=>btn.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function handleRecFile(inp){
+  const f=inp.files[0];if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    recImg=e.target.result;
+    document.getElementById('recUploadBox').innerHTML=`<img src="${recImg}" style="max-width:100%;max-height:220px;border-radius:8px;object-fit:contain">`;
+    document.getElementById('btnRecAnalyze').classList.remove('hidden');
+  };
+  r.readAsDataURL(f);
+}
+
+async function analyzeReception(){
+  if(!recImg) return;
+  const content = document.getElementById('receptionContent');
+  content.innerHTML=`<div class="analyzing"><div class="spinner" style="border-top-color:#22c55e"></div><p style="font-weight:700">Lecture du bon en cours…</p></div>`;
+
+  const b64=recImg.split(',')[1];
+  const mime=recImg.split(';')[0].split(':')[1];
+  const prompts={
+    lagonBleue:`Bon de livraison Lagon Bleue. Extrait articles avec modèle, coloris, taille, quantité. Format: [{"raw":"texte","itemKey":"coloris ex: Marine","category":"ex: 2P - Léa Uni","size":"T38","qty":2,"confidence":"high|medium|low","issue":"si pas high"}]`,
+    sunProject:`Facture Sun Project (shorts). Extrait coloris, taille, quantité. Format: [{"raw":"texte","itemKey":"ex: Gaufre Kaki","size":"L","qty":3,"confidence":"high|medium|low","issue":"si pas high"}]`,
+    bam:`Bon livraison BAM. Extrait type+couleur, taille, quantité. Format: [{"raw":"texte","itemKey":"ex: Triangle - Grecque","section":"hauts|bas","size":"M","qty":4,"confidence":"high|medium|low","issue":"si pas high"}]`
+  };
+  try{
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,
+        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompts[recBrand]+'\nRéponds UNIQUEMENT JSON valide, tableau, sans markdown.'}]}]})});
+    const data=await res.json();
+    const text=data.content.map(x=>x.text||'').join('');
+    recLines=JSON.parse(text.replace(/```json|```/g,'').trim());
+    recLines=recLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
+    renderRecReview();
+  }catch(e){
+    content.innerHTML=`<div style="padding:20px;text-align:center"><p style="color:#ef4444;font-weight:700">❌ Erreur: ${e.message}</p><button class="btn-analyze" style="margin-top:12px" onclick="showReception()">← Réessayer</button></div>`;
+  }
+}
+
+function renderRecReview(){
+  const confirmed=recLines.filter(l=>l.status==='confirmed').length;
+  const modal=document.querySelector('#receptionModal .modal');
+  modal.innerHTML=`
+    <div class="modal-hdr"><h3>📦 Valider la réception</h3><button class="close-btn" onclick="hideReception()">✕</button></div>
+    <div style="display:flex;gap:6px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9">
+      <span class="chip">✅ ${confirmed} confirmés</span>
+      ${recLines.filter(l=>l.status==='pending').length>0?`<span class="chip chip-warn">⚠️ ${recLines.filter(l=>l.status==='pending').length} à vérifier</span>`:''}
+    </div>
+    <div class="lines-list">
+      ${recLines.map((l,i)=>`
+        <div class="line-card ${l.status==='confirmed'?'ok':l.status==='pending'?'warn':'err'}">
+          <div class="line-top">
+            <span class="line-raw">"${l.raw}"</span>
+            <div class="line-btns">
+              ${l.status!=='confirmed'?`<button class="btn-ok-sm" onclick="recLines[${i}].status='confirmed';renderRecReview()">✓</button>`:''}
+              ${l.status!=='ignored'?`<button class="btn-ign-sm" onclick="recLines[${i}].status='ignored';renderRecReview()">✕</button>`:''}
+            </div>
+          </div>
+          <div class="pills">
+            ${[l.itemKey,l.size,l.qty?`+${l.qty}`:null].filter(Boolean).map((p,j)=>`<span class="pill" ${j===2?'style="background:#f0fdf4;color:#16a34a"':''}>${p}</span>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="hideReception()">Annuler</button>
+      <button class="btn-confirm" style="background:linear-gradient(135deg,#22c55e,#16a34a)" onclick="confirmReception()">📦 Ajouter ${confirmed} article${confirmed>1?'s':''} au stock</button>
+    </div>`;
+}
+
+function confirmReception(){
+  let count=0;
+  for(const l of recLines){
+    if(l.status!=='confirmed') continue;
+    const qty=parseInt(l.qty)||0;if(!qty) continue;
+    if(recBrand==='sunProject'&&stock.sunProject.items[l.itemKey]?.[l.size]){
+      stock.sunProject.items[l.itemKey][l.size].i+=qty;count++;
+    } else if(recBrand==='bam'){
+      const sec=l.section==='bas'?'bas':'hauts';
+      if(stock.bam[sec][l.itemKey]?.[l.size]){stock.bam[sec][l.itemKey][l.size].i+=qty;count++;}
+      else if(stock.bam[sec][l.itemKey]){stock.bam[sec][l.itemKey][l.size]={i:qty,s:0};count++;}
+    } else if(recBrand==='lagonBleue'){
+      const cat=stock.lagonBleue.categories[l.category];
+      if(cat?.items?.[l.itemKey]?.[l.size]){cat.items[l.itemKey][l.size].i+=qty;count++;}
+      else if(cat?.items?.[l.itemKey]){
+        cat.items[l.itemKey][l.size]=cat.type==='2p'?{i:qty,sh:0,sb:0}:{i:qty,s:0};count++;
+      }
+    }
+  }
+  saveStock();hideReception();render();
+  alert(`✅ ${count} article${count>1?'s':''} ajouté${count>1?'s':''} au stock !`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AJOUT ARTICLE
+// ═══════════════════════════════════════════════════════════
+function showAdd(){
+  addBrand='bam';addSection='hauts';addCat=Object.keys(stock.lagonBleue.categories)[0];
+  addCatType='1p';addNewCat='';
+  addSizes=[{sz:'S',i:0},{sz:'M',i:0},{sz:'L',i:0},{sz:'XL',i:0}];
+  renderAddContent();
+  document.getElementById('addModal').classList.remove('hidden');
+}
+function hideAdd(){document.getElementById('addModal').classList.add('hidden');}
+
+function renderAddContent(){
+  const cats=Object.keys(stock.lagonBleue.categories);
+  document.getElementById('addContent').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <span class="label">Marque</span>
+        <div class="toggle-group">
+          <button class="toggle-btn ${addBrand==='bam'?'active':''}" onclick="setAddBrand('bam',this)">👙 BAM</button>
+          <button class="toggle-btn ${addBrand==='lagonBleue'?'active':''}" onclick="setAddBrand('lagonBleue',this)">🌊 Lagon Bleue</button>
+          <button class="toggle-btn ${addBrand==='sunProject'?'active':''}" onclick="setAddBrand('sunProject',this)">🏄 Sun Project</button>
+        </div>
+      </div>
+      ${addBrand==='bam'?`<div>
+        <span class="label">Section</span>
+        <div class="toggle-group">
+          <button class="toggle-btn ${addSection==='hauts'?'active':''}" onclick="setAddSection('hauts',this)">👆 Hauts</button>
+          <button class="toggle-btn ${addSection==='bas'?'active':''}" onclick="setAddSection('bas',this)">👇 Bas</button>
+        </div>
+      </div>`:''}
+      ${addBrand==='lagonBleue'?`<div>
+        <span class="label">Catégorie existante</span>
+        <select class="inp" onchange="addCat=this.value">
+          ${cats.map(k=>`<option value="${k}" ${k===addCat?'selected':''}>${k}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <span class="label">Ou nouvelle catégorie (laisser vide sinon)</span>
+        <input class="inp" placeholder="Ex: 2P - Nouveau Modèle" value="${addNewCat}" oninput="addNewCat=this.value;renderAddContent()">
+      </div>
+      ${addNewCat?`<div>
+        <span class="label">Type</span>
+        <div class="toggle-group">
+          <button class="toggle-btn ${addCatType==='1p'?'active':''}" onclick="addCatType='1p';renderAddContent()">1 Pièce</button>
+          <button class="toggle-btn ${addCatType==='2p'?'active':''}" onclick="addCatType='2p';renderAddContent()">2 Pièces</button>
+        </div>
+      </div>`:''}`:''}
+      <div>
+        <span class="label">Nom du coloris / modèle</span>
+        <input class="inp" id="addColoris" placeholder="Ex: Triangle - Corail">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="label" style="margin:0">Tailles et stock initial</span>
+          <button class="btn-add-size" onclick="addSizes.push({sz:'',i:0});renderAddContent()">+ Taille</button>
+        </div>
+        ${addSizes.map((s,i)=>`<div class="add-size-row">
+          <input class="inp" placeholder="Taille (ex: XL)" value="${s.sz}" oninput="addSizes[${i}].sz=this.value">
+          <input class="inp" type="number" placeholder="Stock initial" value="${s.i}" oninput="addSizes[${i}].i=parseInt(this.value)||0">
+          <button class="btn-del-size" onclick="addSizes.splice(${i},1);renderAddContent()">✕</button>
+        </div>`).join('')}
+      </div>
+      <div id="addMsg"></div>
+    </div>`;
+}
+
+function setAddBrand(b,el){
+  addBrand=b;
+  if(b==='lagonBleue') addSizes=[{sz:'T34',i:0},{sz:'T36',i:0},{sz:'T38',i:0},{sz:'T40',i:0},{sz:'T42',i:0},{sz:'T44',i:0}];
+  else if(b==='sunProject') addSizes=[{sz:'S',i:0},{sz:'M',i:0},{sz:'L',i:0},{sz:'XL',i:0},{sz:'2XL',i:0}];
+  else addSizes=[{sz:'S',i:0},{sz:'M',i:0},{sz:'L',i:0},{sz:'XL',i:0}];
+  renderAddContent();
+}
+function setAddSection(s,el){addSection=s;renderAddContent();}
+
+function saveAdd(){
+  const coloris = document.getElementById('addColoris')?.value?.trim();
+  const msg = document.getElementById('addMsg');
+  if(!coloris){msg.className='msg-err';msg.textContent='Entrez un nom de coloris';return;}
+  if(addSizes.some(s=>!s.sz.trim())){msg.className='msg-err';msg.textContent='Toutes les tailles doivent avoir un nom';return;}
+
+  const szMap = Object.fromEntries(addSizes.map(s=>[s.sz.trim(),
+    (addBrand==='lagonBleue'&&(addNewCat?addCatType==='2p':stock.lagonBleue.categories[addCat].type==='2p'))
+      ? {i:s.i,sh:0,sb:0} : {i:s.i,s:0}
+  ]));
+
+  if(addBrand==='sunProject') stock.sunProject.items[coloris]=szMap;
+  else if(addBrand==='bam') stock.bam[addSection][coloris]=szMap;
+  else {
+    const catKey=addNewCat.trim()||addCat;
+    if(addNewCat.trim()) stock.lagonBleue.categories[catKey]={type:addCatType,items:{[coloris]:szMap}};
+    else stock.lagonBleue.categories[catKey].items[coloris]=szMap;
+  }
+  saveStock();
+  msg.className='msg-ok';msg.textContent='✅ Article ajouté !';
+  setTimeout(()=>{hideAdd();render();},600);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
