@@ -156,16 +156,13 @@ select.inp{background:#fff}
         2. L'IA lit chaque ligne automatiquement<br>
         3. Tu valides et le stock se met à jour
       </div>
-      <div class="upload-box" id="uploadBox">
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()" id="uploadBox">
         <div class="upload-icon">📄</div>
-        <p style="font-weight:600;margin-bottom:12px">Comment veux-tu ajouter la photo ?</p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button onclick="document.getElementById('fileInputCamera').click()" style="background:linear-gradient(135deg,#f43f8e,#f97316);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">📸 Prendre une photo</button>
-          <button onclick="document.getElementById('fileInputGallery').click()" style="background:#f1f5f9;color:#334155;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🖼️ Choisir dans la galerie</button>
-        </div>
+        <p style="font-weight:600;margin-bottom:4px">Appuie ici pour prendre la photo</p>
+        <p style="font-size:12px;color:#94a3b8">JPG, PNG acceptés</p>
       </div>
-      <input type="file" id="fileInputCamera" accept="image/*" capture="environment" class="hidden" onchange="handleFile(this)">
-      <input type="file" id="fileInputGallery" accept="image/*" class="hidden" onchange="handleFile(this)">
+      <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFile(this)">
+      <button class="btn-analyze hidden" id="btnAnalyze" onclick="analyzeScan()">🔍 Analyser la feuille</button>
       <button class="btn-analyze hidden" id="btnAnalyze" onclick="analyzeScan()">🔍 Analyser la feuille</button>
     </div>
   </div>
@@ -854,7 +851,7 @@ function handleFile(inp){
   r.onload = e => {
     scanImg = e.target.result;
     const box = document.getElementById('uploadBox');
-    box.innerHTML = `<img src="${scanImg}" style="max-width:100%;max-height:240px;border-radius:8px;object-fit:contain"><br><button onclick="document.getElementById('fileInputCamera').click()" style="margin-top:8px;background:#f1f5f9;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">Changer la photo</button>`;
+    box.innerHTML = `<img src="${scanImg}" style="max-width:100%;max-height:240px;border-radius:8px;object-fit:contain"><br><button onclick="document.getElementById('fileInput').click()" style="margin-top:8px;background:#f1f5f9;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif">Changer la photo</button>`;
     document.getElementById('btnAnalyze').classList.remove('hidden');
   };
   r.readAsDataURL(f);
