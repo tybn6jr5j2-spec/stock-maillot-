@@ -1091,14 +1091,36 @@ async function analyzeReception(){
   const b64=recImg.split(',')[1].replace(/\s/g,'');
   const mime='image/jpeg';
   const prompts={
-    lagonBleue:`Bon de livraison Lagon Bleue. Extrait articles avec modèle, coloris, taille, quantité. Format: [{"raw":"texte","itemKey":"coloris ex: Marine","category":"ex: 2P - Léa Uni","size":"T38","qty":2,"confidence":"high|medium|low","issue":"si pas high"}]`,
-    sunProject:`Facture Sun Project (shorts). Extrait coloris, taille, quantité. Format: [{"raw":"texte","itemKey":"ex: Gaufre Kaki","size":"L","qty":3,"confidence":"high|medium|low","issue":"si pas high"}]`,
-    bam:`Bon livraison BAM. Extrait type+couleur, taille, quantité. Format: [{"raw":"texte","itemKey":"ex: Triangle - Grecque","section":"hauts|bas","size":"M","qty":4,"confidence":"high|medium|low","issue":"si pas high"}]`
+    lagonBleue:`Tu analyses un bon de livraison Lagon Bleue (marque Diet Diffusion).
+
+RÈGLES IMPORTANTES :
+1. Chaque ligne du tableau correspond à UNE référence + UN coloris. Les tailles sont en colonnes (T34, T36, T38, T40, T42, T44, T46...) et les quantités sont dans les cases correspondantes.
+2. Tu dois créer UNE entrée JSON par combinaison (coloris + taille) qui a une quantité > 0.
+3. Les lignes "KA" ou "pack" (ex: "831L00 KA") sont des commandes groupées du même article : additionne les quantités par taille avec les lignes normales du même coloris, ou traite-les séparément si coloris différent.
+4. Si une case taille est vide ou "0", ne crée PAS d'entrée pour cette taille.
+5. La "category" doit correspondre au nom du modèle (ex: "2P - Léa Uni" pour 831L00, "2P - Léa Gold" pour 831L02, "2P - Lili Imprimé Brillant" pour 831L10B, "2P - Inès Gaufré" pour 831L12).
+6. L'"itemKey" est le coloris en français (ex: "Marine", "Noir", "Kaki", "Cannelle", "Kaki Gold", "St Trop Noir").
+7. La quantité "qty" est le nombre exact de pièces pour cette taille et ce coloris.
+
+Format de sortie — un objet par (coloris + taille) :
+[{"raw":"831L00 Marine T36 x2","itemKey":"Marine","category":"2P - Léa Uni","size":"T36","qty":2,"confidence":"high","issue":""},...]
+
+Réponds UNIQUEMENT avec le tableau JSON valide, sans markdown ni texte autour.`,
+    sunProject:`Tu analyses une facture Sun Project (shorts de bain homme).
+Chaque ligne a un coloris et des quantités par taille (S, M, L, XL, 2XL, 3XL, 4XL).
+Crée UNE entrée par combinaison (coloris + taille) avec quantité > 0.
+Format: [{"raw":"texte brut","itemKey":"ex: Gaufre Kaki","size":"L","qty":3,"confidence":"high|medium|low","issue":"si pas high"}]
+Réponds UNIQUEMENT JSON valide, sans markdown.`,
+    bam:`Tu analyses un bon de livraison BAM (maillots de bain).
+Chaque ligne a un type+couleur et des quantités par taille (S, M, L, XL, 2XL).
+Crée UNE entrée par combinaison (article + taille) avec quantité > 0.
+Format: [{"raw":"texte brut","itemKey":"ex: Triangle - Grecque","section":"hauts|bas","size":"M","qty":4,"confidence":"high|medium|low","issue":"si pas high"}]
+Réponds UNIQUEMENT JSON valide, sans markdown.`
   };
   try{
     const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,
-        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompts[recBrand]+'\nRéponds UNIQUEMENT JSON valide, tableau, sans markdown.'}]}]})});
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,
+        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompts[recBrand]}]}]})});
     const data=await res.json();
     const text=data.content.map(x=>x.text||'').join('');
     recLines=JSON.parse(text.replace(/```json|```/g,'').trim());
