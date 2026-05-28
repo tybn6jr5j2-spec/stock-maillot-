@@ -936,8 +936,8 @@ async function analyzeScan(){
     const text1 = ocr1.text || '';
     const text2 = ocr2.text || text1;
     if(!text1.trim()) {
-      const debugInfo = ocr1.debug ? ' Debug: '+ocr1.debug : '';
-      throw new Error('Google Vision n\'a pas pu lire le texte.' + debugInfo + ' Essayez une photo plus lumineuse et nette.');
+      const debugInfo = JSON.stringify(ocr1);
+      throw new Error('OCR vide. Réponse: ' + debugInfo.substring(0,300));
     }
 
     // ── ÉTAPE 2 : Claude corrige le texte OCR ───────────────────────────
