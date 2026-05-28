@@ -13,41 +13,44 @@ export default async function handler(req, res) {
       const googleKey = process.env.GOOGLE_VISION_KEY;
       if (!googleKey) return res.status(500).json({ error: "GOOGLE_VISION_KEY manquante" });
 
-      // Les deux modes utilisent DOCUMENT_TEXT_DETECTION qui est le meilleur pour manuscrit
-      // ocr = avec densité normale, ocr2 = en forçant le mode manuscrit explicitement
-      const request = body.mode === "ocr2"
-        ? {
-            image: { content: body.image },
-            features: [{ type: "DOCUMENT_TEXT_DETECTION", maxResults: 1 }],
-            imageContext: {
-              languageHints: ["fr"],
-              // Force la reconnaissance manuscrite
-              textDetectionParams: {
-                enableTextDetectionConfidenceScore: true
-              }
-            }
-          }
-        : {
-            image: { content: body.image },
-            features: [{ type: "TEXT_DETECTION", maxResults: 1 }],
-            imageContext: {
-              languageHints: ["fr"]
-            }
-          };
+      const featureType = body.mode === "ocr" ? "DOCUMENT_TEXT_DETECTION" : "TEXT_DETECTION";
 
       const visionRes = await fetch(
         `https://vision.googleapis.com/v1/images:annotate?key=${googleKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ requests: [request] })
+          body: JSON.stringify({
+            requests: [{
+              image: { content: body.image },
+              features: [{ type: featureType, maxResults: 1 }],
+              imageContext: { languageHints: ["fr"] }
+            }]
+          })
         }
       );
 
       const visionData = await visionRes.json();
-      const fullText = body.mode === "ocr"
+
+      // Log pour debug
+      if (visionData.error) {
+        return res.status(500).json({ error: "Google Vision API error: " + JSON.stringify(visionData.error) });
+      }
+      if (visionData.responses?.[0]?.error) {
+        return res.status(500).json({ error: "Google Vision response error: " + JSON.stringify(visionData.responses[0].error) });
+      }
+
+      const fullText = featureType === "DOCUMENT_TEXT_DETECTION"
         ? (visionData.responses?.[0]?.fullTextAnnotation?.text || "")
         : (visionData.responses?.[0]?.textAnnotations?.[0]?.description || "");
+
+      // Si vide, retourner un message d'erreur utile
+      if (!fullText.trim()) {
+        return res.status(200).json({ 
+          text: "", 
+          debug: JSON.stringify(visionData.responses?.[0]).substring(0, 200)
+        });
+      }
 
       return res.status(200).json({ text: fullText });
     }
