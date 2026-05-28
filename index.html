@@ -943,7 +943,7 @@ async function analyzeScan(){
     // ── ÉTAPE 2 : Claude corrige le texte OCR ───────────────────────────
     el.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">🔍 Correction du texte…</p><p style="font-size:12px;color:#94a3b8">Claude corrige les erreurs de lecture</p></div>`;
 
-    const corrPrompt = `Tu reçois deux versions OCR d'une feuille de caisse manuscrite d'un magasin de maillots de bain. Les deux versions peuvent avoir des erreurs différentes. Combine-les pour produire la transcription la plus exacte possible de la colonne "Désignation produit".
+    const corrPrompt = `Tu reçois deux versions OCR d'une feuille de caisse manuscrite d'un magasin de maillots de bain. Combine-les pour produire la transcription la plus exacte.
 
 VERSION 1:
 ${text1}
@@ -951,19 +951,17 @@ ${text1}
 VERSION 2:
 ${text2}
 
-CATALOGUE des articles possibles:
-BAM hauts: ${BAM_HAUTS.join(', ')}
-BAM bas: ${BAM_BAS.join(', ')}
-Sun Project shorts: ${SUN.join(', ')}
-Lagon Bleue: modèles Léa, Maya, Lili, Marilyn, Britt, Anita, Nathalie, Cécilia, Cécile, etc.
+CATALOGUE: BAM hauts: ${BAM_HAUTS.join(', ')} | BAM bas: ${BAM_BAS.join(', ')} | Sun Project: ${SUN.join(', ')} | Lagon Bleue: modèles + coloris + taille
 
-RÈGLES:
-- Extrait UNIQUEMENT les lignes de désignation produit (ignore prix, CB, espèces, total, date, titre)
-- Corrige les erreurs OCR évidentes en te basant sur le catalogue (ex: "Totouille"→"Triangle", "Bande"→"Bandeau", "Coulo"→"Culotte")
-- Si une ligne contient "+", garde le "+" pour indiquer plusieurs articles
-- Retourne UNE ligne propre par article vendu
+RÈGLES IMPORTANTES:
+1. Extrait UNIQUEMENT les lignes de désignation produit — ignore prix, CB, espèces, total, date, titre
+2. Chaque ligne = UN article. Une ligne avec des tirets (- - -) ou des barres (/ /) = MÊME article répété, ne compte qu'UNE fois
+3. GARDE TOUJOURS la taille dans la désignation : S, M, L, XL, 2XL, XXL, 3XL
+4. Corrige les erreurs OCR : "Trionfle"→Triangle, "Collo"→Culotte, "Bande"→Bandeau, "Pareo"→Paréo
+5. Format: [TAILLE] [TYPE] [COULEUR] ex: "XL Triangle Blanc", "L Culotte Noeud Jaune", "M Tanga Marron"
+6. Si ligne avec "+": une ligne par article séparé
 
-Format de sortie: une désignation par ligne, texte brut uniquement, pas de JSON ni de numérotation.`;
+Retourne UNE ligne propre par article, texte brut uniquement, sans JSON ni numérotation.`;
 
     const corrRes = await fetch('/api/analyze', {
       method:'POST', headers:{'Content-Type':'application/json'},
