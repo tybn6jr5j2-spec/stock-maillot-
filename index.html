@@ -891,260 +891,124 @@ function handleFile(inp){
 
 async function analyzeScan(){
   if(!scanImg) return;
-  const content = document.getElementById('scanContent');
-  content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">Lecture en cours…</p><p style="font-size:12px;color:#94a3b8">L'IA analyse chaque ligne</p></div>`;
+  const el = document.getElementById('scanContent');
 
   const b64 = scanImg.split(',')[1].replace(/\s/g, '');
   let mime = scanImg.split(';')[0].split(':')[1];
   if(!['image/jpeg','image/png','image/gif','image/webp'].includes(mime)) mime = 'image/jpeg';
 
-  const BAM_HAUTS_KEYS = ["Triangle - Blanc","Triangle - Grecque","Triangle - Electrique","Triangle - Lurex Bleue","Triangle - Marine","Triangle - Rose","Triangle - Motif Rose","Triangle - Kaki","Triangle - Lurex Kaki","Triangle - Motif Vert","Triangle - Jaune","Triangle - Lurex Marron","Triangle - Marron","Triangle - Noir","Triangle - Léopard","Bandeau Souple - Grecque","Bandeau Souple - Electrique","Bandeau Souple - Lurex Bleue","Bandeau Souple - Rose","Bandeau Souple - Lurex Kaki","Bandeau Souple - Jaune","Bandeau Souple - Lurex Marron","Bandeau Souple - Noir","Bandeau Dur - Blanc","Bandeau Dur - Grecque","Bandeau Dur - Electrique","Bandeau Dur - Lurex Bleue","Bandeau Dur - Marine","Bandeau Dur - Rose","Bandeau Dur - Motif Rose","Bandeau Dur - Kaki","Bandeau Dur - Lurex Kaki","Bandeau Dur - Motif Vert","Bandeau Dur - Jaune","Bandeau Dur - Lurex Marron","Bandeau Dur - Marron","Bandeau Dur - Noir","Bandeau Dur - Léopard","SG GT - Grecque","SG GT - Electrique","SG GT - Lurex Bleue","SG GT - Marine","SG GT - Rose","SG GT - Motif Rose","SG GT - Kaki","SG GT - Lurex Kaki","SG GT - Motif Vert","SG GT - Lurex Marron","SG GT - Marron","SG GT - Noir","SG GT - Léopard"];
-  const BAM_BAS_KEYS = ["Culotte Normale - Blanc","Culotte Normale - Grecque","Culotte Normale - Electrique","Culotte Normale - Lurex Bleue","Culotte Normale - Marine","Culotte Normale - Rose","Culotte Normale - Motif Rose","Culotte Normale - Kaki","Culotte Normale - Lurex Kaki","Culotte Normale - Motif Vert","Culotte Normale - Jaune","Culotte Normale - Lurex Marron","Culotte Normale - Marron","Culotte Normale - Noir","Culotte Normale - Léopard","Culotte Noeud - Blanc","Culotte Noeud - Grecque","Culotte Noeud - Electrique","Culotte Noeud - Lurex Bleue","Culotte Noeud - Marine","Culotte Noeud - Rose","Culotte Noeud - Motif Rose","Culotte Noeud - Kaki","Culotte Noeud - Lurex Kaki","Culotte Noeud - Motif Vert","Culotte Noeud - Jaune","Culotte Noeud - Lurex Marron","Culotte Noeud - Marron","Culotte Noeud - Noir","Culotte Noeud - Léopard","Culotte GT - Blanc","Culotte GT - Grecque","Culotte GT - Electrique","Culotte GT - Lurex Bleue","Culotte GT - Marine","Culotte GT - Rose","Culotte GT - Motif Rose","Culotte GT - Kaki","Culotte GT - Lurex Kaki","Culotte GT - Motif Vert","Culotte GT - Lurex Marron","Culotte GT - Marron","Culotte GT - Noir","Culotte GT - Léopard","Tanga - Blanc","Tanga - Grecque","Tanga - Lurex Marine","Tanga - Marine","Tanga - Rose","Tanga - Motif Rose","Tanga - Kaki","Tanga - Lurex Kaki","Tanga - Motif Vert","Tanga - Jaune","Tanga - Lurex Marron","Tanga - Marron","Tanga - Noir","Tanga - Léopard","Shorty - Noir","Shorty - Marine","Shorty - Kaki"];
-  const SUN_KEYS = ["Bleu Electrique","Corail Fluo","Kaki","Bleue Ciel","Jaune Fluo","Beige Gris","Vertdeau","Noir","Rayure Gris Blanc","Rayure Rouge Blanc","Gaufre Vert","Turtles Bleue","Hibiscus Flash","Gaufre Bleue","Gaufre Marine","Gaufre Kaki","Rose Pale","Fleur Blanche","Kaki GT","Noir GT","Bleue Ciel GT"];
-
-  const prompt = `Tu analyses une feuille de caisse manuscrite. Extrait UNIQUEMENT les désignations produit. Ignore Prix, CB, Espèces, TOTAL.
-
-RÈGLE : l'itemKey DOIT être exactement dans ces listes :
-BAM HAUTS (brand=bam,section=hauts): ${BAM_HAUTS_KEYS.join(",")}
-BAM BAS (brand=bam,section=bas): ${BAM_BAS_KEYS.join(",")}
-SUN PROJECT (brand=sunProject): ${SUN_KEYS.join(",")}
-LAGON BLEUE (brand=lagonBleue): itemKey=coloris (Marine,Noir,Kaki,Royal,Blanc,Rose,Cannelle,Choco...), piece=haut|bas|ensemble
-
-TYPES BAM: "GT BAS/Culotte GT/Culotte Haute"->Culotte GT(bas), "GT HAUT/Haut GT/SG GT"->SG GT(hauts), "GT" seul->SG GT(hauts), "Triangle"->Triangle(hauts), "Bandeau Dur"->Bandeau Dur(hauts), "Bandeau"->Bandeau Souple(hauts), "Culotte Noeud"->Culotte Noeud(bas), "Culotte"->Culotte Normale(bas), "Tanga"->Tanga(bas), "Shorty"->Shorty(bas)
-COULEURS: Grec->Grecque, Elec->Electrique, Marine->Marine, Tropical/Fleur->Motif Rose, Vert feuille->Motif Vert, Lurex bleu->Lurex Bleue, Lurex kaki->Lurex Kaki, Lurex marron->Lurex Marron
-Si ligne avec "+": une entree par article. Si inconnu: brand=unknown.
-Format: [{"raw":"texte","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"cle exacte","section":"hauts|bas","size":"M|T38","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":""}]
-UNIQUEMENT JSON valide sans markdown.`;
+  const BAM_HAUTS = ["Triangle - Blanc","Triangle - Grecque","Triangle - Electrique","Triangle - Lurex Bleue","Triangle - Marine","Triangle - Rose","Triangle - Motif Rose","Triangle - Kaki","Triangle - Lurex Kaki","Triangle - Motif Vert","Triangle - Jaune","Triangle - Lurex Marron","Triangle - Marron","Triangle - Noir","Triangle - Léopard","Bandeau Souple - Grecque","Bandeau Souple - Electrique","Bandeau Souple - Lurex Bleue","Bandeau Souple - Rose","Bandeau Souple - Lurex Kaki","Bandeau Souple - Jaune","Bandeau Souple - Lurex Marron","Bandeau Souple - Noir","Bandeau Dur - Blanc","Bandeau Dur - Grecque","Bandeau Dur - Electrique","Bandeau Dur - Lurex Bleue","Bandeau Dur - Marine","Bandeau Dur - Rose","Bandeau Dur - Motif Rose","Bandeau Dur - Kaki","Bandeau Dur - Lurex Kaki","Bandeau Dur - Motif Vert","Bandeau Dur - Jaune","Bandeau Dur - Lurex Marron","Bandeau Dur - Marron","Bandeau Dur - Noir","Bandeau Dur - Léopard","SG GT - Grecque","SG GT - Electrique","SG GT - Lurex Bleue","SG GT - Marine","SG GT - Rose","SG GT - Motif Rose","SG GT - Kaki","SG GT - Lurex Kaki","SG GT - Motif Vert","SG GT - Lurex Marron","SG GT - Marron","SG GT - Noir","SG GT - Léopard"];
+  const BAM_BAS = ["Culotte Normale - Blanc","Culotte Normale - Grecque","Culotte Normale - Electrique","Culotte Normale - Lurex Bleue","Culotte Normale - Marine","Culotte Normale - Rose","Culotte Normale - Motif Rose","Culotte Normale - Kaki","Culotte Normale - Lurex Kaki","Culotte Normale - Motif Vert","Culotte Normale - Jaune","Culotte Normale - Lurex Marron","Culotte Normale - Marron","Culotte Normale - Noir","Culotte Normale - Léopard","Culotte Noeud - Blanc","Culotte Noeud - Grecque","Culotte Noeud - Electrique","Culotte Noeud - Lurex Bleue","Culotte Noeud - Marine","Culotte Noeud - Rose","Culotte Noeud - Motif Rose","Culotte Noeud - Kaki","Culotte Noeud - Lurex Kaki","Culotte Noeud - Motif Vert","Culotte Noeud - Jaune","Culotte Noeud - Lurex Marron","Culotte Noeud - Marron","Culotte Noeud - Noir","Culotte Noeud - Léopard","Culotte GT - Blanc","Culotte GT - Grecque","Culotte GT - Electrique","Culotte GT - Lurex Bleue","Culotte GT - Marine","Culotte GT - Rose","Culotte GT - Motif Rose","Culotte GT - Kaki","Culotte GT - Lurex Kaki","Culotte GT - Motif Vert","Culotte GT - Lurex Marron","Culotte GT - Marron","Culotte GT - Noir","Culotte GT - Léopard","Tanga - Blanc","Tanga - Grecque","Tanga - Lurex Marine","Tanga - Marine","Tanga - Rose","Tanga - Motif Rose","Tanga - Kaki","Tanga - Lurex Kaki","Tanga - Motif Vert","Tanga - Jaune","Tanga - Lurex Marron","Tanga - Marron","Tanga - Noir","Tanga - Léopard","Shorty - Noir","Shorty - Marine","Shorty - Kaki"];
+  const SUN = ["Bleu Electrique","Corail Fluo","Kaki","Bleue Ciel","Jaune Fluo","Beige Gris","Vertdeau","Noir","Rayure Gris Blanc","Rayure Rouge Blanc","Gaufre Vert","Turtles Bleue","Hibiscus Flash","Gaufre Bleue","Gaufre Marine","Gaufre Kaki","Rose Pale","Fleur Blanche","Kaki GT","Noir GT","Bleue Ciel GT"];
 
   try {
-    const res = await fetch('/api/analyze', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-5',
-        max_tokens:6000,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-          {type:'text',text:prompt}
-        ]}]
-      })
+    // ── ÉTAPE 1 : Google Vision - double lecture ─────────────────────────
+    el.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">📷 Lecture manuscrite…</p><p style="font-size:12px;color:#94a3b8">Google Vision analyse l'écriture (x2)</p></div>`;
+
+    const [ocr1, ocr2] = await Promise.all([
+      fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({mode:'ocr',image:b64,mime})}).then(r=>r.json()),
+      fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({mode:'ocr2',image:b64,mime})}).then(r=>r.json())
+    ]);
+
+    const text1 = ocr1.text || '';
+    const text2 = ocr2.text || text1;
+    if(!text1.trim()) throw new Error('Google Vision n\'a pas pu lire le texte');
+
+    // ── ÉTAPE 2 : Claude corrige le texte OCR ───────────────────────────
+    el.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">🔍 Correction du texte…</p><p style="font-size:12px;color:#94a3b8">Claude corrige les erreurs de lecture</p></div>`;
+
+    const corrPrompt = `Tu reçois deux versions OCR d'une feuille de caisse manuscrite d'un magasin de maillots de bain. Les deux versions peuvent avoir des erreurs différentes. Combine-les pour produire la transcription la plus exacte possible de la colonne "Désignation produit".
+
+VERSION 1:
+${text1}
+
+VERSION 2:
+${text2}
+
+CATALOGUE des articles possibles:
+BAM hauts: ${BAM_HAUTS.join(', ')}
+BAM bas: ${BAM_BAS.join(', ')}
+Sun Project shorts: ${SUN.join(', ')}
+Lagon Bleue: modèles Léa, Maya, Lili, Marilyn, Britt, Anita, Nathalie, Cécilia, Cécile, etc.
+
+RÈGLES:
+- Extrait UNIQUEMENT les lignes de désignation produit (ignore prix, CB, espèces, total, date, titre)
+- Corrige les erreurs OCR évidentes en te basant sur le catalogue (ex: "Totouille"→"Triangle", "Bande"→"Bandeau", "Coulo"→"Culotte")
+- Si une ligne contient "+", garde le "+" pour indiquer plusieurs articles
+- Retourne UNE ligne propre par article vendu
+
+Format de sortie: une désignation par ligne, texte brut uniquement, pas de JSON ni de numérotation.`;
+
+    const corrRes = await fetch('/api/analyze', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5', max_tokens:2000,
+        messages:[{role:'user',content:[{type:'text',text:corrPrompt}]}]})
     });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-    if(!data.content) throw new Error('Réponse invalide: '+JSON.stringify(data));
-    const text = data.content.map(x=>x.text||'').join('');
-    let cleanText = text.replace(/```json|```/g,'').trim();
-    if(!cleanText.endsWith(']')){const lb=cleanText.lastIndexOf('}');if(lb>0)cleanText=cleanText.substring(0,lb+1)+']';else cleanText+=']';}
-    scanLines = JSON.parse(cleanText);
+    const corrData = await corrRes.json();
+    if(corrData.error) throw new Error(corrData.error.message||JSON.stringify(corrData.error));
+    const correctedText = corrData.content.map(x=>x.text||'').join('');
+
+    // ── ÉTAPE 3 : Claude interprète en JSON ─────────────────────────────
+    el.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">🤖 Identification des articles…</p><p style="font-size:12px;color:#94a3b8">Association au catalogue</p></div>`;
+
+    const interpPrompt = `Tu reçois une liste d'articles vendus dans un magasin de maillots de bain. Associe chaque ligne à un article du catalogue.
+
+ARTICLES:
+${correctedText}
+
+RÈGLE ABSOLUE: l'itemKey DOIT être exactement dans ces listes:
+BAM HAUTS (brand=bam,section=hauts): ${BAM_HAUTS.join(',')}
+BAM BAS (brand=bam,section=bas): ${BAM_BAS.join(',')}
+SUN PROJECT (brand=sunProject) tailles S/M/L/XL/2XL/3XL/4XL: ${SUN.join(',')}
+LAGON BLEUE (brand=lagonBleue) tailles T34-T52: itemKey=coloris (Marine,Noir,Kaki,Royal,Blanc,Rose,Cannelle,Choco,Emeraude...), piece=haut|bas|ensemble
+
+TYPES BAM:
+"GT BAS/Culotte GT/Culotte Haute/Culotte GrT" → Culotte GT (section=bas)
+"GT HAUT/Haut GT/SG GT" → SG GT (section=hauts)
+"GT" seul → SG GT (section=hauts)
+"Triangle/Tria" → Triangle (section=hauts)
+"Bandeau Dur/BD" → Bandeau Dur (section=hauts)
+"Bandeau/BS" → Bandeau Souple (section=hauts)
+"Culotte Noeud/CN" → Culotte Noeud (section=bas)
+"Culotte" seul → Culotte Normale (section=bas)
+"Tanga" → Tanga (section=bas)
+"Shorty" → Shorty (section=bas)
+
+COULEURS BAM:
+Grec→Grecque, Elec→Electrique, Marine→Marine, Tropical/Fleur→Motif Rose, Vert feuille/Vert gaufre→Motif Vert
+Lurex bleu→Lurex Bleue, Lurex kaki→Lurex Kaki, Lurex marron→Lurex Marron, Leopard→Léopard
+
+Si ligne avec "+": une entrée JSON par article.
+Si inconnu: brand=unknown.
+
+Format JSON:
+[{"raw":"texte ligne","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"clé exacte","section":"hauts|bas","size":"M|T38|2XL","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"raison si pas high"}]
+UNIQUEMENT JSON valide sans markdown.`;
+
+    const interpRes = await fetch('/api/analyze', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5', max_tokens:6000,
+        messages:[{role:'user',content:[{type:'text',text:interpPrompt}]}]})
+    });
+    const interpData = await interpRes.json();
+    if(interpData.error) throw new Error(interpData.error.message||JSON.stringify(interpData.error));
+    const text = interpData.content.map(x=>x.text||'').join('');
+    let clean = text.replace(/```json|```/g,'').trim();
+    if(!clean.endsWith(']')){const lb=clean.lastIndexOf('}');if(lb>0)clean=clean.substring(0,lb+1)+']';else clean+=']';}
+    scanLines = JSON.parse(clean);
     scanLines = scanLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
     renderScanReview();
+
   } catch(e) {
-    content.innerHTML = `<div style="padding:20px;text-align:center">
+    el.innerHTML = `<div style="padding:20px;text-align:center">
       <p style="color:#ef4444;font-weight:700;margin-bottom:12px">❌ Erreur lors de l'analyse</p>
       <p style="font-size:13px;color:#64748b;margin-bottom:16px">${e.message}</p>
       <button class="btn-analyze" onclick="resetScanUI()">← Réessayer</button>
     </div>`;
   }
 }
-
-function renderScanReview(){
-  const confirmed = scanLines.filter(l=>l.status==='confirmed').length;
-  const pending = scanLines.filter(l=>l.status==='pending').length;
-  const error = scanLines.filter(l=>l.status==='error').length;
-
-  const modal = document.querySelector('#scanModal .modal');
-  modal.innerHTML = `
-    <div class="modal-hdr">
-      <h3>📸 Valider les ventes</h3>
-      <button class="close-btn" onclick="hideScan()">✕</button>
-    </div>
-    <div style="display:flex;gap:6px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9">
-      <span class="chip">✅ ${confirmed} confirmées</span>
-      ${pending>0?`<span class="chip chip-warn">⚠️ ${pending} à vérifier</span>`:''}
-      ${error>0?`<span class="chip chip-err">❌ ${error} illisibles</span>`:''}
-    </div>
-    <div class="lines-list" id="scanLines">
-      ${scanLines.map((l,i)=>renderScanLine(l,i)).join('')}
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="hideScan()">Annuler</button>
-      <button class="btn-confirm" onclick="confirmScan()">✅ Valider ${confirmed} vente${confirmed>1?'s':''} → Stock</button>
-    </div>`;
-}
-
-function renderScanLine(l,i){
-  const cls = l.status==='confirmed'?'ok':l.status==='pending'?'warn':'err';
-  const pills = [l.brand,l.itemKey,l.size,l.piece&&l.piece!=='ensemble'?`(${l.piece})`:null].filter(Boolean);
-  return `<div class="line-card ${cls}" id="scanLine_${i}">
-    <div class="line-top">
-      <span class="line-raw">"${l.raw}"</span>
-      <div class="line-btns">
-        ${l.status!=='confirmed'?`<button class="btn-ok-sm" onclick="setScanStatus(${i},'confirmed')">✓</button>`:''}
-        ${l.status!=='ignored'?`<button class="btn-ign-sm" onclick="setScanStatus(${i},'ignored')">✕</button>`:''}
-      </div>
-    </div>
-    <div class="pills">${pills.map(p=>`<span class="pill">${p}</span>`).join('')}</div>
-    ${l.issue?`<div class="issue-box">⚠️ ${l.issue}</div>`:''}
-    ${(l.status==='pending'||l.status==='error')?`
-      <div class="edit-grid" style="margin-top:8px">
-        <input class="line-inp" placeholder="Marque" value="${l.brand||''}" onchange="scanLines[${i}].brand=this.value">
-        <input class="line-inp" placeholder="Article" value="${l.itemKey||''}" onchange="scanLines[${i}].itemKey=this.value">
-        <input class="line-inp" placeholder="Taille" value="${l.size||''}" onchange="scanLines[${i}].size=this.value">
-      </div>`:''}
-  </div>`;
-}
-
-function setScanStatus(i, status){
-  scanLines[i].status = status;
-  renderScanReview();
-}
-
-function normalizeItemKey(brand,section,itemKey){
-  if(!itemKey) return itemKey;
-  if(brand==='sunProject'){
-    const keys=Object.keys(stock.sunProject.items);
-    return keys.find(k=>k.toLowerCase()===itemKey.toLowerCase())||keys.find(k=>k.toLowerCase().includes(itemKey.toLowerCase())||itemKey.toLowerCase().includes(k.toLowerCase()))||itemKey;
-  }
-  if(brand==='bam'){
-    const secs=section==='bas'?['bas']:section==='hauts'?['hauts']:['hauts','bas'];
-    for(const sec of secs){
-      const keys=Object.keys(stock.bam[sec]);
-      const exact=keys.find(k=>k.toLowerCase()===itemKey.toLowerCase());
-      if(exact) return exact;
-      const partial=keys.find(k=>{const kl=k.toLowerCase(),il=itemKey.toLowerCase();return kl.includes(il)||il.includes(kl)||(il.includes('grec')&&kl.includes('grecque'))||(il.includes('elec')&&kl.includes('electrique'))||(il.includes('tropical')&&kl.includes('motif rose'))||(il.includes('fleur')&&kl.includes('motif rose'))||(il.includes('vert feuil')&&kl.includes('motif vert'))||(il.includes('vert gaufr')&&kl.includes('motif vert'))||(il.includes('lurex bleu')&&kl.includes('lurex bleue'))||(il.includes('noud')&&kl.includes('noeud'))||(il.includes('noeu')&&kl.includes('noeud'));});
-      if(partial) return partial;
-    }
-  }
-  if(brand==='lagonBleue'){
-    for(const catData of Object.values(stock.lagonBleue.categories)){
-      const keys=Object.keys(catData.items);
-      const exact=keys.find(k=>k.toLowerCase()===itemKey.toLowerCase());
-      if(exact) return exact;
-    }
-  }
-  return itemKey;
-}
-function confirmScan(){
-  const today=new Date().toISOString().split('T')[0];
-  let count=0; const notFound=[];
-  for(const l of scanLines){
-    if(l.status!=='confirmed') continue;
-    const {brand,piece,raw}=l;
-    let {itemKey,size,section}=l;
-    itemKey=normalizeItemKey(brand,section,itemKey);
-    let updated=false;
-    if(brand==='sunProject'){
-      const item=stock.sunProject.items[itemKey];
-      if(item&&size&&item[size]){item[size].s=(item[size].s||0)+1;updated=true;}
-      else if(item&&!size){updated=true;}
-    } else if(brand==='bam'){
-      const secs=section==='bas'?['bas']:section==='hauts'?['hauts']:['hauts','bas'];
-      for(const sec of secs){
-        const item=stock.bam[sec][itemKey];
-        if(item){if(size&&item[size]){item[size].s=(item[size].s||0)+1;updated=true;}else if(!size){updated=true;}break;}
-      }
-    } else if(brand==='lagonBleue'){
-      for(const catData of Object.values(stock.lagonBleue.categories)){
-        const item=catData.items[itemKey];
-        if(item){
-          if(size&&item[size]){
-            const cell=item[size];
-            if(catData.type==='2p'){const p=(piece||'ensemble').toLowerCase();if(p==='haut')cell.sh=(cell.sh||0)+1;else if(p==='bas')cell.sb=(cell.sb||0)+1;else{cell.sh=(cell.sh||0)+1;cell.sb=(cell.sb||0)+1;}}
-            else{cell.s=(cell.s||0)+1;}
-            updated=true;
-          } else if(!size){updated=true;}
-          break;
-        }
-      }
-    }
-    if(updated){count++;sales.push({date:today,raw,brand,itemKey,size});}
-    else{notFound.push(raw);}
-  }
-  saveStock();saveSales();hideScan();render();
-  let msg=`✅ ${count} vente${count>1?'s':''} enregistree${count>1?'s':''} !`;
-  if(notFound.length>0){msg+=`\n\n⚠️ ${notFound.length} article(s) non trouve(s):\n`+notFound.map(r=>'• '+r).join('\n');}
-  alert(msg);
-}
-
-// ═══════════════════════════════════════════════════════════
-// EXPORT CSV
-// ═══════════════════════════════════════════════════════════
-function exportCSV(){
-  const date = new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
-  let csv = '';
-  const add1P=(title,items)=>{
-    csv+=`\n${title}\nColoris,Taille,Init,Vendu,Actuel\n`;
-    Object.entries(items).forEach(([col,szMap])=>{
-      Object.entries(szMap).forEach(([sz,c])=>{
-        csv+=`"${col}",${sz},${c.i||0},${c.s||0},${(c.i||0)-(c.s||0)}\n`;
-      });
-    });
-  };
-  const add2P=(title,items)=>{
-    csv+=`\n${title}\nColoris,Taille,Init,V.Haut,V.Bas,Reste Haut,Reste Bas\n`;
-    Object.entries(items).forEach(([col,szMap])=>{
-      Object.entries(szMap).forEach(([sz,c])=>{
-        csv+=`"${col}",${sz},${c.i||0},${c.sh||0},${c.sb||0},${(c.i||0)-(c.sh||0)},${(c.i||0)-(c.sb||0)}\n`;
-      });
-    });
-  };
-  csv+='=== SUN PROJECT ===\n';
-  add1P('Sun Project',stock.sunProject.items);
-  csv+='\n=== LAGON BLEUE ===\n';
-  Object.entries(stock.lagonBleue.categories).forEach(([cat,catData])=>{
-    if(catData.type==='2p') add2P(`Lagon - ${cat}`,catData.items);
-    else add1P(`Lagon - ${cat}`,catData.items);
-  });
-  csv+='\n=== BAM ===\n';
-  add1P('BAM - Hauts',stock.bam.hauts);
-  add1P('BAM - Bas',stock.bam.bas);
-
-  const uri='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  const a=document.createElement('a');
-  a.setAttribute('href',uri);
-  a.setAttribute('download',`Stock_Maillot_${date}.csv`);
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-}
-
-// ═══════════════════════════════════════════════════════════
-// RECEPTION LIVRAISON
-// ═══════════════════════════════════════════════════════════
-function showReception(){
-  recImg=null;recLines=[];recBrand='lagonBleue';
-  document.getElementById('receptionModal').classList.remove('hidden');
-}
-function hideReception(){document.getElementById('receptionModal').classList.add('hidden');}
-
-function setRecBrand(b, el){
-  recBrand=b;
-  document.querySelectorAll('#receptionModal .toggle-btn').forEach(btn=>btn.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function handleRecFile(inp){
-  const f=inp.files[0];if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const canvas=document.createElement('canvas');
-      const maxSize=1600;
-      let w=img.width,h=img.height;
-      if(w>maxSize||h>maxSize){
-        if(w>h){h=Math.round(h*maxSize/w);w=maxSize;}
-        else{w=Math.round(w*maxSize/h);h=maxSize;}
-      }
-      canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      recImg=canvas.toDataURL('image/jpeg',0.85);
-      document.getElementById('recUploadBox').innerHTML=`<img src="${recImg}" style="max-width:100%;max-height:220px;border-radius:8px;object-fit:contain">`;
-      document.getElementById('btnRecAnalyze').classList.remove('hidden');
-    };
-    img.src=e.target.result;
-  };
-  r.readAsDataURL(f);
-}
-
 async function analyzeReception(){
   if(!recImg) return;
   const content = document.getElementById('receptionContent');
