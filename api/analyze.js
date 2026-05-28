@@ -9,10 +9,13 @@ export default async function handler(req, res) {
     const body = req.body;
 
     // ── MODE GOOGLE VISION OCR ──────────────────────────────────────────────
-    // Appelé avec { mode: "ocr", image: "<base64>", mime: "image/jpeg" }
-    if (body.mode === "ocr") {
+    if (body.mode === "ocr" || body.mode === "ocr2") {
       const googleKey = process.env.GOOGLE_VISION_KEY;
       if (!googleKey) return res.status(500).json({ error: "GOOGLE_VISION_KEY manquante" });
+
+      // ocr = DOCUMENT_TEXT_DETECTION (meilleur pour documents)
+      // ocr2 = TEXT_DETECTION (meilleur pour texte manuscrit épars)
+      const featureType = body.mode === "ocr2" ? "TEXT_DETECTION" : "DOCUMENT_TEXT_DETECTION";
 
       const visionRes = await fetch(
         `https://vision.googleapis.com/v1/images:annotate?key=${googleKey}`,
@@ -22,7 +25,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             requests: [{
               image: { content: body.image },
-              features: [{ type: "DOCUMENT_TEXT_DETECTION", maxResults: 1 }],
+              features: [{ type: featureType, maxResults: 1 }],
               imageContext: { languageHints: ["fr"] }
             }]
           })
@@ -30,7 +33,12 @@ export default async function handler(req, res) {
       );
 
       const visionData = await visionRes.json();
-      const fullText = visionData.responses?.[0]?.fullTextAnnotation?.text || "";
+      // DOCUMENT_TEXT_DETECTION retourne fullTextAnnotation
+      // TEXT_DETECTION retourne textAnnotations[0]
+      const fullText = body.mode === "ocr2"
+        ? (visionData.responses?.[0]?.textAnnotations?.[0]?.description || "")
+        : (visionData.responses?.[0]?.fullTextAnnotation?.text || "");
+
       return res.status(200).json({ text: fullText });
     }
 
