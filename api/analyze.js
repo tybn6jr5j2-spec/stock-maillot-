@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     // ── MODE GOOGLE VISION OCR ──────────────────────────────────────────────
     if (body.mode === "ocr" || body.mode === "ocr2") {
-      const googleKey = process.env.GOOGLE_VISION_KEY;
+      const googleKey = process.env.GOOGLE_VISION_KEY || process.env.google_vision_key;
       if (!googleKey) return res.status(500).json({ error: "GOOGLE_VISION_KEY manquante" });
 
       const featureType = body.mode === "ocr" ? "DOCUMENT_TEXT_DETECTION" : "TEXT_DETECTION";
