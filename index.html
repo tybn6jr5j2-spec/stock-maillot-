@@ -347,6 +347,13 @@ const INITIAL = {
     "Léa Kids Gold":{type:"1p",items:{
       "Royal":{"3XS":{i:3,s:1},"2XS":{i:4,s:3},XS:{i:5,s:1},S:{i:5,s:3},M:{i:2,s:2}},
       "Kaki":{"3XS":{i:2,s:1},"2XS":{i:3,s:1},XS:{i:5,s:1},S:{i:5,s:1},M:{i:5,s:3}}
+    }},
+    "Paréo":{type:"pareo",items:{
+      "Blanc":{TU:{i:0,s:0}},
+      "Choco":{TU:{i:0,s:0}},
+      "Kaki":{TU:{i:0,s:0}},
+      "Marine":{TU:{i:0,s:0}},
+      "Noir":{TU:{i:0,s:0}}
     }}
   }},
   bam:{
@@ -756,12 +763,29 @@ function renderSun(){
 // ═══════════════════════════════════════════════════════════
 function renderLagon(){
   const cats = stock.lagonBleue.categories;
+  const cats2p = Object.keys(cats).filter(k=>cats[k].type==='2p');
+  const cats1p = Object.keys(cats).filter(k=>cats[k].type==='1p');
+  const catsPareo = Object.keys(cats).filter(k=>cats[k].type==='pareo');
+
+  const activeGroup = cats2p.includes(currentLagonCat)?'2p':cats1p.includes(currentLagonCat)?'1p':'pareo';
+  const groupCats = activeGroup==='2p'?cats2p:activeGroup==='1p'?cats1p:catsPareo;
+
   const catData = cats[currentLagonCat];
-  const is2p = catData.type==='2p';
   const items = catData.items;
+  const is2p = catData.type==='2p';
+  const isPareo = catData.type==='pareo';
+
+  // Nom court sans préfixe
+  const shortName = k => k.replace(/^[12]P - /,'');
+
   return `<h2 class="page-title">🌊 Lagon Bleue</h2>
+    <div class="sub-nav" style="margin-bottom:8px">
+      <button class="sub-btn ${activeGroup==='2p'?'active':''}" onclick="setLagonGroup('2p')">👙 2 Pièces</button>
+      <button class="sub-btn ${activeGroup==='1p'?'active':''}" onclick="setLagonGroup('1p')">🩱 1 Pièce</button>
+      <button class="sub-btn ${activeGroup==='pareo'?'active':''}" onclick="setLagonGroup('pareo')">🌴 Paréo</button>
+    </div>
     <div class="cat-nav">
-      ${Object.keys(cats).map(k=>`<button class="cat-btn ${k===currentLagonCat?'active':''}" onclick="setLagonCat('${k}')">${k}</button>`).join('')}
+      ${groupCats.map(k=>`<button class="cat-btn ${k===currentLagonCat?'active':''}" onclick="setLagonCat('${k}')">${shortName(k)}</button>`).join('')}
     </div>
     <input class="search" placeholder="🔍 Rechercher..." oninput="filterBlocks(this,'lagon-blocks')">
     <div id="lagon-blocks">
@@ -771,6 +795,11 @@ function renderLagon(){
     </div>`;
 }
 function setLagonCat(cat){currentLagonCat=cat;render();}
+function setLagonGroup(group){
+  const cats = stock.lagonBleue.categories;
+  const keys = Object.keys(cats).filter(k=>cats[k].type===group);
+  if(keys.length>0){currentLagonCat=keys[0];render();}
+}
 
 // ═══════════════════════════════════════════════════════════
 // BAM
@@ -875,50 +904,97 @@ function handleFile(inp){
 async function analyzeScan(){
   if(!scanImg) return;
   const content = document.getElementById('scanContent');
-  content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">Lecture en cours…</p><p style="font-size:12px;color:#94a3b8">L'IA analyse chaque ligne</p></div>`;
 
   const b64 = scanImg.split(',')[1].replace(/\s/g, '');
   let mime = scanImg.split(';')[0].split(':')[1];
   if(!['image/jpeg','image/png','image/gif','image/webp'].includes(mime)) mime = 'image/jpeg';
 
-  const prompt = `Tu analyses une feuille de caisse d'un magasin de maillots de bain. Extrait UNIQUEMENT la colonne "Désignation produit". Ignore Prix, CB, Espèces.
-
-Marques :
-- "sunProject" : shorts homme. itemKey = coloris exact (Gaufre Kaki, Turtles Bleue, Noir, etc.)
-- "bam" : Triangle, Bandeau Souple, Bandeau Dur, SG GT, Culotte Normale, Culotte Nœud, Culotte GT, Tanga, Shorty + couleur (Grecque=Grec, Motif Rose=Tropical/Fleur, Motif Vert=Vert Feuille, etc.)
-- "lagonBleue" : modèles nommés (Léa, Maya, Lili, Marilyn, Britt, Anita, Nathalie, Cécilia, Cécile, etc.) tailles numériques T34-T52. Pour 2P précise piece: haut/bas/ensemble
-
-Réponds UNIQUEMENT JSON valide, tableau:
-[{"raw":"texte","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"clé exacte","size":"M|T38","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"si pas high"}]`;
+  const BAM_HAUTS_KEYS = ["Triangle - Blanc","Triangle - Grecque","Triangle - Electrique","Triangle - Lurex Bleue","Triangle - Marine","Triangle - Rose","Triangle - Motif Rose","Triangle - Kaki","Triangle - Lurex Kaki","Triangle - Motif Vert","Triangle - Jaune","Triangle - Lurex Marron","Triangle - Marron","Triangle - Noir","Triangle - Léopard","Bandeau Souple - Grecque","Bandeau Souple - Electrique","Bandeau Souple - Lurex Bleue","Bandeau Souple - Rose","Bandeau Souple - Lurex Kaki","Bandeau Souple - Jaune","Bandeau Souple - Lurex Marron","Bandeau Souple - Noir","Bandeau Dur - Blanc","Bandeau Dur - Grecque","Bandeau Dur - Electrique","Bandeau Dur - Lurex Bleue","Bandeau Dur - Marine","Bandeau Dur - Rose","Bandeau Dur - Motif Rose","Bandeau Dur - Kaki","Bandeau Dur - Lurex Kaki","Bandeau Dur - Motif Vert","Bandeau Dur - Jaune","Bandeau Dur - Lurex Marron","Bandeau Dur - Marron","Bandeau Dur - Noir","Bandeau Dur - Léopard","SG GT - Grecque","SG GT - Electrique","SG GT - Lurex Bleue","SG GT - Marine","SG GT - Rose","SG GT - Motif Rose","SG GT - Kaki","SG GT - Lurex Kaki","SG GT - Motif Vert","SG GT - Lurex Marron","SG GT - Marron","SG GT - Noir","SG GT - Léopard"];
+  const BAM_BAS_KEYS = ["Culotte Normale - Blanc","Culotte Normale - Grecque","Culotte Normale - Electrique","Culotte Normale - Lurex Bleue","Culotte Normale - Marine","Culotte Normale - Rose","Culotte Normale - Motif Rose","Culotte Normale - Kaki","Culotte Normale - Lurex Kaki","Culotte Normale - Motif Vert","Culotte Normale - Jaune","Culotte Normale - Lurex Marron","Culotte Normale - Marron","Culotte Normale - Noir","Culotte Normale - Léopard","Culotte Noeud - Blanc","Culotte Noeud - Grecque","Culotte Noeud - Electrique","Culotte Noeud - Lurex Bleue","Culotte Noeud - Marine","Culotte Noeud - Rose","Culotte Noeud - Motif Rose","Culotte Noeud - Kaki","Culotte Noeud - Lurex Kaki","Culotte Noeud - Motif Vert","Culotte Noeud - Jaune","Culotte Noeud - Lurex Marron","Culotte Noeud - Marron","Culotte Noeud - Noir","Culotte Noeud - Léopard","Culotte GT - Blanc","Culotte GT - Grecque","Culotte GT - Electrique","Culotte GT - Lurex Bleue","Culotte GT - Marine","Culotte GT - Rose","Culotte GT - Motif Rose","Culotte GT - Kaki","Culotte GT - Lurex Kaki","Culotte GT - Motif Vert","Culotte GT - Lurex Marron","Culotte GT - Marron","Culotte GT - Noir","Culotte GT - Léopard","Tanga - Blanc","Tanga - Grecque","Tanga - Lurex Marine","Tanga - Marine","Tanga - Rose","Tanga - Motif Rose","Tanga - Kaki","Tanga - Lurex Kaki","Tanga - Motif Vert","Tanga - Jaune","Tanga - Lurex Marron","Tanga - Marron","Tanga - Noir","Tanga - Léopard","Shorty - Noir","Shorty - Marine","Shorty - Kaki"];
+  const SUN_KEYS = ["Bleu Electrique","Corail Fluo","Kaki","Bleue Ciel","Jaune Fluo","Beige Gris","Vertdeau","Noir","Rayure Gris Blanc","Rayure Rouge Blanc","Gaufre Vert","Turtles Bleue","Hibiscus Flash","Gaufre Bleue","Gaufre Marine","Gaufre Kaki","Rose Pale","Fleur Blanche","Kaki GT","Noir GT","Bleue Ciel GT"];
 
   try {
-    const res = await fetch('/api/analyze', {
+    // ── ÉTAPE 1 : Google Vision lit le texte manuscrit ──────────────────
+    content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">📷 Lecture du texte…</p><p style="font-size:12px;color:#94a3b8">Google Vision analyse l'écriture</p></div>`;
+
+    const ocrRes = await fetch('/api/analyze', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ mode:'ocr', image:b64, mime })
+    });
+    const ocrData = await ocrRes.json();
+    if(ocrData.error) throw new Error('OCR: '+ocrData.error);
+    const ocrText = ocrData.text || '';
+    if(!ocrText.trim()) throw new Error('Google Vision n'a pas pu lire le texte');
+
+    // ── ÉTAPE 2 : Claude interprète le texte ────────────────────────────
+    content.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">🤖 Analyse des articles…</p><p style="font-size:12px;color:#94a3b8">Claude identifie chaque vente</p></div>`;
+
+    const claudePrompt = `Tu analyses le texte d'une feuille de caisse manuscrite d'un magasin de maillots de bain.
+Voici le texte extrait par OCR (peut contenir des erreurs de lecture) :
+
+${ocrText}
+
+Extrait UNIQUEMENT les lignes de la colonne "Désignation produit". Ignore Prix, CB, Espèces, TOTAL, dates, titres.
+
+RÈGLE ABSOLUE : l'itemKey DOIT être choisi EXACTEMENT dans ces listes :
+
+BAM HAUTS (brand=bam, section=hauts) : ${BAM_HAUTS_KEYS.join(', ')}
+
+BAM BAS (brand=bam, section=bas) : ${BAM_BAS_KEYS.join(', ')}
+
+SUN PROJECT shorts (brand=sunProject) tailles S/M/L/XL/2XL/3XL/4XL : ${SUN_KEYS.join(', ')}
+
+LAGON BLEUE (brand=lagonBleue) tailles T34-T52 : itemKey = coloris (Marine, Noir, Kaki, Royal, Blanc, Rose, Cannelle, Choco, Emeraude...), piece = haut|bas|ensemble
+
+CORRESPONDANCES TYPE BAM :
+"GT BAS/Culotte GT/Culotte GrTaille/Culotte Haute" → Culotte GT (section=bas)
+"GT HAUT/Haut GT/SG GT" → SG GT (section=hauts)
+"GT" seul → SG GT (section=hauts)
+"Triangle/Tria/Triang" → Triangle (section=hauts)
+"Bandeau Dur/BD" → Bandeau Dur (section=hauts)
+"Bandeau/BS" → Bandeau Souple (section=hauts)
+"Culotte Noeud/CN" → Culotte Noeud (section=bas)
+"Culotte" seul → Culotte Normale (section=bas)
+"Tanga" → Tanga (section=bas)
+"Shorty" → Shorty (section=bas)
+
+CORRESPONDANCES COULEUR :
+"Grec/Gaufre Grec" → Grecque | "Elec/Bleu elec" → Electrique | "Marine/Mar" → Marine
+"Tropical/Fleur" → Motif Rose | "Vert feuille/Vert gaufre" → Motif Vert
+"Lurex bleu" → Lurex Bleue | "Lurex kaki" → Lurex Kaki | "Lurex marron" → Lurex Marron
+"Marron kaki" → Marron | "Leopard" → Léopard
+
+SI une ligne contient "+" → crée UNE entrée par article.
+Si itemKey introuvable → brand="unknown".
+
+Format JSON :
+[{"raw":"texte ligne originale","brand":"bam|lagonBleue|sunProject|unknown","itemKey":"clé exacte","section":"hauts|bas","size":"M|T38|2XL","piece":"haut|bas|ensemble","confidence":"high|medium|low","issue":"raison si pas high"}]
+
+Réponds UNIQUEMENT JSON valide, sans markdown.`;
+
+    const claudeRes = await fetch('/api/analyze', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-5',
         max_tokens:6000,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-          {type:'text',text:prompt}
-        ]}]
+        messages:[{role:'user',content:[{type:'text',text:claudePrompt}]}]
       })
     });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-    if(!data.content) throw new Error('Réponse invalide: '+JSON.stringify(data));
-    const text = data.content.map(x=>x.text||'').join('');
+    const claudeData = await claudeRes.json();
+    if(claudeData.error) throw new Error(claudeData.error.message||JSON.stringify(claudeData.error));
+    const text = claudeData.content.map(x=>x.text||'').join('');
     let cleanText = text.replace(/```json|```/g,'').trim();
-    // Si JSON tronqué, tenter de le réparer
     if(!cleanText.endsWith(']')){
-      const lastComma = cleanText.lastIndexOf(',{"raw');
-      const lastOk = cleanText.lastIndexOf('}');
-      if(lastOk > 0) cleanText = cleanText.substring(0, lastOk+1) + ']';
+      const lastBrace = cleanText.lastIndexOf('}');
+      if(lastBrace > 0) cleanText = cleanText.substring(0, lastBrace+1) + ']';
       else cleanText += ']';
     }
     scanLines = JSON.parse(cleanText);
     scanLines = scanLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
     renderScanReview();
+
   } catch(e) {
     content.innerHTML = `<div style="padding:20px;text-align:center">
       <p style="color:#ef4444;font-weight:700;margin-bottom:12px">❌ Erreur lors de l'analyse</p>
@@ -1105,7 +1181,7 @@ async function analyzeReception(){
   };
   try{
     const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:6000,
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,
         messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompts[recBrand]+'\nRéponds UNIQUEMENT JSON valide, tableau, sans markdown.'}]}]})});
     const data=await res.json();
     const text=data.content.map(x=>x.text||'').join('');
