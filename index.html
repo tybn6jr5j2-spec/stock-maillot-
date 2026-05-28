@@ -1214,6 +1214,32 @@ function saveAdd(){
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
+function renderScanReview(){
+  const confirmed = scanLines.filter(l=>l.status==='confirmed').length;
+  const pending = scanLines.filter(l=>l.status==='pending').length;
+  const error = scanLines.filter(l=>l.status==='error').length;
+
+  const modal = document.querySelector('#scanModal .modal');
+  modal.innerHTML = `
+    <div class="modal-hdr">
+      <h3>📸 Valider les ventes</h3>
+      <button class="close-btn" onclick="hideScan()">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid #f1f5f9">
+      <span class="chip">✅ ${confirmed} confirmées</span>
+      ${pending>0?`<span class="chip chip-warn">⚠️ ${pending} à vérifier</span>`:''}
+      ${error>0?`<span class="chip chip-err">❌ ${error} illisibles</span>`:''}
+    </div>
+    <div class="lines-list" id="scanLines">
+      ${scanLines.map((l,i)=>renderScanLine(l,i)).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="hideScan()">Annuler</button>
+      <button class="btn-confirm" onclick="confirmScan()">✅ Valider ${confirmed} vente${confirmed>1?'s':''} → Stock</button>
+    </div>`;
+}
+
+
 render();
 </script>
 </body>
