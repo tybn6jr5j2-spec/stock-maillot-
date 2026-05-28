@@ -897,6 +897,27 @@ async function analyzeScan(){
   let mime = scanImg.split(';')[0].split(':')[1];
   if(!['image/jpeg','image/png','image/gif','image/webp'].includes(mime)) mime = 'image/jpeg';
 
+  // Compresser spécifiquement pour Google Vision (max 1MB)
+  const compressForOCR = async (dataUrl) => {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 1200;
+        let w = img.width, h = img.height;
+        if(w > maxSize || h > maxSize){
+          if(w > h){h = Math.round(h*maxSize/w);w=maxSize;}
+          else{w=Math.round(w*maxSize/h);h=maxSize;}
+        }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+      };
+      img.src = dataUrl;
+    });
+  };
+  const b64ocr = await compressForOCR(scanImg);
+
   const BAM_HAUTS = ["Triangle - Blanc","Triangle - Grecque","Triangle - Electrique","Triangle - Lurex Bleue","Triangle - Marine","Triangle - Rose","Triangle - Motif Rose","Triangle - Kaki","Triangle - Lurex Kaki","Triangle - Motif Vert","Triangle - Jaune","Triangle - Lurex Marron","Triangle - Marron","Triangle - Noir","Triangle - Léopard","Bandeau Souple - Grecque","Bandeau Souple - Electrique","Bandeau Souple - Lurex Bleue","Bandeau Souple - Rose","Bandeau Souple - Lurex Kaki","Bandeau Souple - Jaune","Bandeau Souple - Lurex Marron","Bandeau Souple - Noir","Bandeau Dur - Blanc","Bandeau Dur - Grecque","Bandeau Dur - Electrique","Bandeau Dur - Lurex Bleue","Bandeau Dur - Marine","Bandeau Dur - Rose","Bandeau Dur - Motif Rose","Bandeau Dur - Kaki","Bandeau Dur - Lurex Kaki","Bandeau Dur - Motif Vert","Bandeau Dur - Jaune","Bandeau Dur - Lurex Marron","Bandeau Dur - Marron","Bandeau Dur - Noir","Bandeau Dur - Léopard","SG GT - Grecque","SG GT - Electrique","SG GT - Lurex Bleue","SG GT - Marine","SG GT - Rose","SG GT - Motif Rose","SG GT - Kaki","SG GT - Lurex Kaki","SG GT - Motif Vert","SG GT - Lurex Marron","SG GT - Marron","SG GT - Noir","SG GT - Léopard"];
   const BAM_BAS = ["Culotte Normale - Blanc","Culotte Normale - Grecque","Culotte Normale - Electrique","Culotte Normale - Lurex Bleue","Culotte Normale - Marine","Culotte Normale - Rose","Culotte Normale - Motif Rose","Culotte Normale - Kaki","Culotte Normale - Lurex Kaki","Culotte Normale - Motif Vert","Culotte Normale - Jaune","Culotte Normale - Lurex Marron","Culotte Normale - Marron","Culotte Normale - Noir","Culotte Normale - Léopard","Culotte Noeud - Blanc","Culotte Noeud - Grecque","Culotte Noeud - Electrique","Culotte Noeud - Lurex Bleue","Culotte Noeud - Marine","Culotte Noeud - Rose","Culotte Noeud - Motif Rose","Culotte Noeud - Kaki","Culotte Noeud - Lurex Kaki","Culotte Noeud - Motif Vert","Culotte Noeud - Jaune","Culotte Noeud - Lurex Marron","Culotte Noeud - Marron","Culotte Noeud - Noir","Culotte Noeud - Léopard","Culotte GT - Blanc","Culotte GT - Grecque","Culotte GT - Electrique","Culotte GT - Lurex Bleue","Culotte GT - Marine","Culotte GT - Rose","Culotte GT - Motif Rose","Culotte GT - Kaki","Culotte GT - Lurex Kaki","Culotte GT - Motif Vert","Culotte GT - Lurex Marron","Culotte GT - Marron","Culotte GT - Noir","Culotte GT - Léopard","Tanga - Blanc","Tanga - Grecque","Tanga - Lurex Marine","Tanga - Marine","Tanga - Rose","Tanga - Motif Rose","Tanga - Kaki","Tanga - Lurex Kaki","Tanga - Motif Vert","Tanga - Jaune","Tanga - Lurex Marron","Tanga - Marron","Tanga - Noir","Tanga - Léopard","Shorty - Noir","Shorty - Marine","Shorty - Kaki"];
   const SUN = ["Bleu Electrique","Corail Fluo","Kaki","Bleue Ciel","Jaune Fluo","Beige Gris","Vertdeau","Noir","Rayure Gris Blanc","Rayure Rouge Blanc","Gaufre Vert","Turtles Bleue","Hibiscus Flash","Gaufre Bleue","Gaufre Marine","Gaufre Kaki","Rose Pale","Fleur Blanche","Kaki GT","Noir GT","Bleue Ciel GT"];
@@ -907,9 +928,9 @@ async function analyzeScan(){
 
     const [ocr1, ocr2] = await Promise.all([
       fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({mode:'ocr',image:b64,mime})}).then(r=>r.json()),
+        body:JSON.stringify({mode:'ocr',image:b64ocr,mime:'image/jpeg'})}).then(r=>r.json()),
       fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({mode:'ocr2',image:b64,mime})}).then(r=>r.json())
+        body:JSON.stringify({mode:'ocr2',image:b64ocr,mime:'image/jpeg'})}).then(r=>r.json())
     ]);
 
     const text1 = ocr1.text || '';
