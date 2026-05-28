@@ -13,31 +13,41 @@ export default async function handler(req, res) {
       const googleKey = process.env.GOOGLE_VISION_KEY;
       if (!googleKey) return res.status(500).json({ error: "GOOGLE_VISION_KEY manquante" });
 
-      // ocr = DOCUMENT_TEXT_DETECTION (meilleur pour documents)
-      // ocr2 = TEXT_DETECTION (meilleur pour texte manuscrit épars)
-      const featureType = body.mode === "ocr2" ? "TEXT_DETECTION" : "DOCUMENT_TEXT_DETECTION";
+      // Les deux modes utilisent DOCUMENT_TEXT_DETECTION qui est le meilleur pour manuscrit
+      // ocr = avec densité normale, ocr2 = en forçant le mode manuscrit explicitement
+      const request = body.mode === "ocr2"
+        ? {
+            image: { content: body.image },
+            features: [{ type: "DOCUMENT_TEXT_DETECTION", maxResults: 1 }],
+            imageContext: {
+              languageHints: ["fr"],
+              // Force la reconnaissance manuscrite
+              textDetectionParams: {
+                enableTextDetectionConfidenceScore: true
+              }
+            }
+          }
+        : {
+            image: { content: body.image },
+            features: [{ type: "TEXT_DETECTION", maxResults: 1 }],
+            imageContext: {
+              languageHints: ["fr"]
+            }
+          };
 
       const visionRes = await fetch(
         `https://vision.googleapis.com/v1/images:annotate?key=${googleKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            requests: [{
-              image: { content: body.image },
-              features: [{ type: featureType, maxResults: 1 }],
-              imageContext: { languageHints: ["fr"] }
-            }]
-          })
+          body: JSON.stringify({ requests: [request] })
         }
       );
 
       const visionData = await visionRes.json();
-      // DOCUMENT_TEXT_DETECTION retourne fullTextAnnotation
-      // TEXT_DETECTION retourne textAnnotations[0]
-      const fullText = body.mode === "ocr2"
-        ? (visionData.responses?.[0]?.textAnnotations?.[0]?.description || "")
-        : (visionData.responses?.[0]?.fullTextAnnotation?.text || "");
+      const fullText = body.mode === "ocr"
+        ? (visionData.responses?.[0]?.fullTextAnnotation?.text || "")
+        : (visionData.responses?.[0]?.textAnnotations?.[0]?.description || "");
 
       return res.status(200).json({ text: fullText });
     }
