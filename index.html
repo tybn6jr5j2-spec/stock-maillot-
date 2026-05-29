@@ -957,7 +957,7 @@ RÈGLES IMPORTANTES:
 1. Extrait UNIQUEMENT les lignes de désignation produit — ignore prix, CB, espèces, total, date, titre
 2. Chaque ligne = UN article. Une ligne avec des tirets (- - -) ou des barres (/ /) = MÊME article répété, ne compte qu'UNE fois
 3. GARDE TOUJOURS la taille dans la désignation : S, M, L, XL, 2XL, XXL, 3XL
-4. Corrige les erreurs OCR : "Trionfle"→Triangle, "Collo"→Culotte, "Bande"→Bandeau, "Pareo"→Paréo
+4. Corrige les erreurs OCR : "Trionfle"→Triangle, "Collo"→Culotte, "Bande"→Bandeau, "Paréo"→Paréo
 5. TAILLES — règles strictes :
    - "2XL" ou "XXL" ou "2 XL" ou "2xL" ou "2Xl" → toujours écrire "2XL" (le chiffre 2 devant XL est souvent mal lu, vérifier attentivement)
    - "C" seul comme taille → lire comme "L" (confusion d'écriture fréquente)
@@ -1033,7 +1033,60 @@ UNIQUEMENT JSON valide sans markdown.`;
     let clean = text.replace(/```json|```/g,'').trim();
     if(!clean.endsWith(']')){const lb=clean.lastIndexOf('}');if(lb>0)clean=clean.substring(0,lb+1)+']';else clean+=']';}
     scanLines = JSON.parse(clean);
-    scanLines = scanLines.map(l=>({...l,status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'}));
+    scanLines = scanLines.map(l=>{
+      let sz = (l.size||'').trim();
+      if(sz==='XC') sz='XL';
+      if(sz==='2XC') sz='2XL';
+      if(sz==='C') sz='L';
+      return {...l, size:sz, status:l.confidence==='high'?'confirmed':l.confidence==='medium'?'pending':'error'};
+    });
+
+    // ── ÉTAPE 4 : Claude vérifie les tailles sur l'image originale ──────
+    el.innerHTML = `<div class="analyzing"><div class="spinner"></div><p style="font-weight:700">🔎 Vérification des tailles…</p><p style="font-size:12px;color:#94a3b8">Claude relit l'image pour confirmer</p></div>`;
+
+    const sizesToCheck = scanLines.filter(l=>l.size==='XL'||l.size===''||!l.size).map(l=>l.raw).join('\n');
+    if(sizesToCheck) {
+      const verifyPrompt = `Tu reçois une image d'une feuille de caisse manuscrite et une liste d'articles dont la taille est incertaine.
+Pour chaque article listé, regarde attentivement l'image et dis-moi la taille exacte écrite (S, M, L, XL, 2XL, 3XL).
+Attention : "2XL" ou "XXL" est souvent écrit avec un petit "2" collé devant "XL" — regarde bien.
+
+Articles à vérifier :
+${sizesToCheck}
+
+Réponds UNIQUEMENT avec un JSON : [{"raw":"texte original","size":"taille corrigée"}]
+Sans markdown.`;
+
+      const verifyRes = await fetch('/api/analyze', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-5', max_tokens:1000,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+            {type:'text',text:verifyPrompt}
+          ]}]
+        })
+      });
+      const verifyData = await verifyRes.json();
+      if(!verifyData.error){
+        const vtext = verifyData.content.map(x=>x.text||'').join('');
+        try {
+          const corrections = JSON.parse(vtext.replace(/```json|```/g,'').trim());
+          corrections.forEach(corr=>{
+            scanLines = scanLines.map(l=>{
+              if(l.raw===corr.raw && corr.size){
+                let sz = corr.size.trim().toUpperCase();
+                if(sz==='XXL') sz='2XL';
+                if(sz==='XC') sz='XL';
+                if(sz==='C') sz='L';
+                return {...l, size:sz};
+              }
+              return l;
+            });
+          });
+        } catch(e){}
+      }
+    }
+
     renderScanReview();
 
   } catch(e) {
@@ -1052,7 +1105,7 @@ async function analyzeReception(){
   const b64=recImg.split(',')[1].replace(/\s/g,'');
   const mime='image/jpeg';
   const prompts={
-    lagonBleue:`Bon de livraison Diet Diffusion Lagon Bleue. REFS->CATEGORY: 831L00=2P - Lea Uni,831L02=2P - Lea Gold,831L04=2P - Lea Tanga,831L08=2P - Ines,831L10B=2P - Lili St Trop,831L10=2P - Lili Ramatuelle,831L12=2P - Ines,831L14B=2P - Laurie Gold,831L31M=2P - Laetitia MG,841L08=2P - Ines,841L09=1P - Nathalie,841L09C=1P - Nathalie,841L14B=2P - Laurie Gold,841L31M=1P - Marilyn Marin,841S20=Pareo. COLORIS: MAR=Marine,NOI=Noir,KAK=Kaki,CANN=Cannelle,KAKIG=Kaki Gold,STNOI=St Trop Noir,EMEG=Emeraude,ROYG=Royal Gold,ROY=Royal,BLA=Blanc,CHO=Choco,RAMMA=Ramatuelle M,HABANA=Habana. REGLES: 1 entree par (coloris+taille) qty>0. Packs KA: additionner par taille. Cases vides=0. Pareo: size=TU. Format: [{"raw":"texte","itemKey":"coloris","category":"ex: 2P - Lea Uni","size":"T38","qty":2,"confidence":"high|medium|low","issue":""}] JSON uniquement.`,
+    lagonBleue:`Bon de livraison Diet Diffusion Lagon Bleue. REFS->CATEGORY: 831L00=2P - Lea Uni,831L02=2P - Lea Gold,831L04=2P - Lea Tanga,831L08=2P - Ines,831L10B=2P - Lili St Trop,831L10=2P - Lili Ramatuelle,831L12=2P - Ines,831L14B=2P - Laurie Gold,831L31M=2P - Laetitia MG,841L08=2P - Ines,841L09=1P - Nathalie,841L09C=1P - Nathalie,841L14B=2P - Laurie Gold,841L31M=1P - Marilyn Marin,841S20=Paréo. COLORIS: MAR=Marine,NOI=Noir,KAK=Kaki,CANN=Cannelle,KAKIG=Kaki Gold,STNOI=St Trop Noir,EMEG=Emeraude,ROYG=Royal Gold,ROY=Royal,BLA=Blanc,CHO=Choco,RAMMA=Ramatuelle M,HABANA=Habana. REGLES: 1 entree par (coloris+taille) qty>0. Packs KA: additionner par taille. Cases vides=0. Paréo: size=TU. Format: [{"raw":"texte","itemKey":"coloris","category":"ex: 2P - Lea Uni","size":"T38","qty":2,"confidence":"high|medium|low","issue":""}] JSON uniquement.`,
     sunProject:`Facture Sun Project shorts. Extrait coloris, taille, quantite. Format: [{"raw":"texte","itemKey":"ex: Gaufre Kaki","size":"L","qty":3,"confidence":"high|medium|low","issue":""}] JSON uniquement.`,
     bam:`Bon livraison BAM. Extrait type+couleur, taille, quantite. Format: [{"raw":"texte","itemKey":"ex: Triangle - Grecque","section":"hauts|bas","size":"M","qty":4,"confidence":"high|medium|low","issue":""}] JSON uniquement.`
   };
@@ -1289,6 +1342,9 @@ function confirmScan(){
       if(stock.bam.hauts[itemKey]?.[size]) stock.bam.hauts[itemKey][size].s = (stock.bam.hauts[itemKey][size].s||0)+1;
       else if(stock.bam.bas[itemKey]?.[size]) stock.bam.bas[itemKey][size].s = (stock.bam.bas[itemKey][size].s||0)+1;
     } else if(brand==='lagonBleue'){
+      // Normaliser Pareo → Paréo
+      if(itemKey==='Pareo') itemKey='Paréo';
+      if(itemKey==='pareo') itemKey='Paréo';
       for(const [catName,catData] of Object.entries(stock.lagonBleue.categories)){
         const resolvedKey=(catName==='Paréo'&&itemKey.toLowerCase()==='marron')?'Choco':itemKey;
         const cell = catData.items[resolvedKey]?.[size];
