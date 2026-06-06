@@ -1462,11 +1462,40 @@ function handleRecFile(inp){
 // ═══════════════════════════════════════════════════════════
 // CAISSE
 // ═══════════════════════════════════════════════════════════
-let panier = []; // [{id, brand, itemKey, size, price, paiement, piece, raw}]
-let caisseStep = 'brand'; // brand | type | couleur | taille | prix
-let caisseSelection = {}; // sélection en cours
+let panier = [];
+let caisseSelection = {};
+let transactions = []; // [{id, heure, articles:[{...}], total, paiement}]
+
+// Prix automatiques BAM
+function getPrixBAM(itemKey, section){
+  const couleur = itemKey.includes(' - ') ? itemKey.split(' - ')[1] : itemKey;
+  const lurexLeopard = ['Lurex Bleue','Lurex Kaki','Lurex Marron','Lurex Marine','Léopard'];
+  const imprime = ['Grecque','Motif Rose','Motif Vert'];
+  if(section==='hauts'){
+    if(imprime.includes(couleur)) return 22.90;
+    if(lurexLeopard.some(l=>couleur.includes(l)||l===couleur)) return 24.90;
+    return 19.90;
+  } else {
+    if(imprime.includes(couleur)) return 17.90;
+    if(lurexLeopard.some(l=>couleur.includes(l)||l===couleur)) return 19.90;
+    return 15.90;
+  }
+}
+
+function getPrixLagon(modele){ return 59.90; }
+function getPrixSun(){ return 29.90; }
 
 function showCaisse(){
+  // Charger les transactions du jour depuis sales
+  const today = new Date().toISOString().split('T')[0];
+  // Regrouper les ventes par transactionId
+  const txMap = {};
+  sales.filter(s=>s.date===today&&s.transactionId).forEach(s=>{
+    if(!txMap[s.transactionId]) txMap[s.transactionId]={id:s.transactionId,heure:s.heure||'',articles:[],total:0,paiement:s.paiement};
+    txMap[s.transactionId].articles.push(s);
+    txMap[s.transactionId].total += s.price||0;
+  });
+  transactions = Object.values(txMap).sort((a,b)=>a.id-b.id);
   renderCaisse();
   document.getElementById('caisseModal').classList.remove('hidden');
 }
@@ -1482,59 +1511,62 @@ function renderCaisse(){
   const totalPanier = panier.reduce((acc,p)=>acc+(p.price||0),0);
 
   el.innerHTML = `
-    <!-- RÉSUMÉ JOURNÉE -->
-    <div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:14px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px">📅 Aujourd'hui</div>
+    <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:12px;padding:14px;margin-bottom:14px;color:#fff">
+      <div style="font-size:11px;opacity:0.6;margin-bottom:8px">AUJOURD'HUI</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-        <div><div style="font-size:18px;font-weight:800;color:#0f172a">${ventesJour.length}</div><div style="font-size:10px;color:#94a3b8">ventes</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:#2563eb">${cbJour.toFixed(0)}€</div><div style="font-size:10px;color:#94a3b8">CB</div></div>
-        <div><div style="font-size:18px;font-weight:800;color:#16a34a">${espJour.toFixed(0)}€</div><div style="font-size:10px;color:#94a3b8">Espèces</div></div>
+        <div><div style="font-size:22px;font-weight:800">${ventesJour.length}</div><div style="font-size:10px;opacity:0.6">VENTES</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#60a5fa">${cbJour.toFixed(0)}€</div><div style="font-size:10px;opacity:0.6">CB</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#4ade80">${espJour.toFixed(0)}€</div><div style="font-size:10px;opacity:0.6">ESPÈCES</div></div>
+      </div>
+      <div style="text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)">
+        <span style="font-size:24px;font-weight:800">${totalJour.toFixed(2)}€</span>
+        <span style="font-size:11px;opacity:0.6;margin-left:6px">TOTAL</span>
       </div>
     </div>
 
-    <!-- PANIER EN COURS -->
     ${panier.length>0?`
-    <div style="margin-bottom:14px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px">🛒 Panier en cours</div>
+    <div style="background:#fff;border-radius:12px;border:2px solid #22c55e;margin-bottom:14px;overflow:hidden">
+      <div style="padding:10px 14px;background:#f0fdf4;font-weight:700;font-size:13px;color:#16a34a">🛒 Panier en cours</div>
       ${panier.map((p,i)=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:8px;margin-bottom:4px;border:1px solid #f1f5f9">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #f1f5f9">
           <div>
-            <div style="font-weight:600;font-size:13px">${p.itemKey} ${p.size||''}</div>
-            <div style="font-size:11px;color:#94a3b8">${p.brand==='bam'?'BAM':p.brand==='sunProject'?'Sun Project':'Lagon Bleue'}</div>
+            <div style="font-weight:600;font-size:13px">${p.label}</div>
+            <div style="font-size:11px;color:#94a3b8">${p.brandLabel}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-weight:700;color:#0f172a">${p.price}€</span>
-            <button onclick="retirerPanier(${i})" style="background:#fef2f2;border:none;border-radius:6px;padding:4px 8px;color:#ef4444;cursor:pointer;font-size:12px">✕</button>
+            <span style="font-weight:800;font-size:14px">${p.price.toFixed(2)}€</span>
+            <button onclick="retirerPanier(${i})" style="background:#fef2f2;border:none;border-radius:6px;width:26px;height:26px;color:#ef4444;cursor:pointer;font-size:14px">✕</button>
           </div>
         </div>
       `).join('')}
-      <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#0f172a;border-radius:8px;color:#fff;font-weight:700;font-size:15px;margin-top:4px">
-        <span>Total</span><span>${totalPanier.toFixed(2)}€</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f8fafc">
+        <span style="font-weight:800;font-size:16px">Total : ${totalPanier.toFixed(2)}€</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-        <button onclick="validerPanier('cb')" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer">💳 CB</button>
-        <button onclick="validerPanier('especes')" style="background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer">💵 Espèces</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #f1f5f9">
+        <button onclick="validerPanier('cb')" style="background:#2563eb;color:#fff;border:none;padding:14px;font-weight:700;font-size:15px;cursor:pointer;border-right:1px solid rgba(255,255,255,0.2)">💳 CB</button>
+        <button onclick="validerPanier('especes')" style="background:#16a34a;color:#fff;border:none;padding:14px;font-weight:700;font-size:15px;cursor:pointer">💵 Espèces</button>
       </div>
     </div>
     `:''}
 
-    <!-- AJOUTER UN ARTICLE -->
-    <div>
-      <div style="font-weight:700;font-size:13px;margin-bottom:10px">➕ Ajouter un article</div>
-      ${renderCaisseSelector()}
+    <div style="background:#fff;border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-weight:700;font-size:13px">➕ Ajouter un article</div>
+      <div style="padding:12px 14px">${renderCaisseSelector()}</div>
     </div>
 
-    <!-- HISTORIQUE JOURNÉE -->
-    ${ventesJour.length>0?`
-    <div style="margin-top:16px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:8px">📋 Ventes du jour</div>
-      ${ventesJour.slice().reverse().map(v=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f8fafc;border-radius:7px;margin-bottom:3px">
-          <div style="font-size:12px;font-weight:600">${v.raw||v.itemKey} ${v.size||''}</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            ${v.price?`<span style="font-weight:700;font-size:13px">${v.price}€</span>`:''}
-            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${v.paiement==='cb'?'#dbeafe':'#dcfce7'};color:${v.paiement==='cb'?'#2563eb':'#16a34a'}">${v.paiement==='cb'?'CB':'ESP'}</span>
+    ${transactions.length>0?`
+    <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+      <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;font-weight:700;font-size:13px">📋 Feuille de caisse</div>
+      ${transactions.slice().reverse().map((tx,i)=>`
+        <div style="padding:10px 14px;border-bottom:1px solid #f8fafc">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11px;color:#94a3b8;font-weight:600">Transaction #${transactions.length-i} ${tx.heure?'· '+tx.heure:''}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:13px;font-weight:800">${tx.total.toFixed(2)}€</span>
+              <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tx.paiement==='cb'?'#dbeafe':'#dcfce7'};color:${tx.paiement==='cb'?'#2563eb':'#16a34a'};font-weight:700">${tx.paiement==='cb'?'CB':'ESP'}</span>
+            </div>
           </div>
+          ${tx.articles.map(a=>`<div style="font-size:12px;color:#475569;padding:2px 0">· ${a.raw||a.itemKey} ${a.size||''} — ${(a.price||0).toFixed(2)}€</div>`).join('')}
         </div>
       `).join('')}
     </div>
@@ -1544,173 +1576,247 @@ function renderCaisse(){
 
 function renderCaisseSelector(){
   const sel = caisseSelection;
-  
-  // Étape 1 : Choix de la marque
+
   if(!sel.brand) return `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-      <button onclick="caisseChoix('brand','bam')" class="caisse-btn">👙 BAM</button>
-      <button onclick="caisseChoix('brand','sunProject')" class="caisse-btn">🏄 Sun Project</button>
-      <button onclick="caisseChoix('brand','lagonBleue')" class="caisse-btn">🌊 Lagon Bleue</button>
+      <button onclick="caisseChoix('brand','bam')" class="caisse-btn">👙<br>BAM</button>
+      <button onclick="caisseChoix('brand','sunProject')" class="caisse-btn">🏄<br>Sun Project</button>
+      <button onclick="caisseChoix('brand','lagonBleue')" class="caisse-btn">🌊<br>Lagon Bleue</button>
     </div>`;
 
-  // Étape 2 : Choix du type/modèle
-  if(!sel.itemKey){
-    if(sel.brand==='bam'){
-      const hauts = Object.keys(stock.bam.hauts);
-      const bas = Object.keys(stock.bam.bas);
-      const types = [...new Set([...hauts,...bas].map(k=>k.split(' - ')[0]))].sort();
-      return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Type d'article :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${types.map(t=>`<button onclick="caisseChoix('type','${t}')" class="caisse-btn-sm">${t}</button>`).join('')}
-        </div>
-        <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
-    }
-    if(sel.brand==='sunProject'){
-      const coloris = Object.keys(stock.sunProject.items).sort();
-      return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Coloris :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${coloris.map(c=>`<button onclick="caisseChoix('itemKey','${c}')" class="caisse-btn-sm">${c}</button>`).join('')}
-        </div>
-        <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
-    }
-    if(sel.brand==='lagonBleue'){
-      const modeles = Object.keys(stock.lagonBleue.categories).sort();
-      return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Modèle :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${modeles.map(m=>`<button onclick="caisseChoix('lagonModele','${m.replace(/'/g,"\'")}') " class="caisse-btn-sm">${m.replace(/^[12]P - /,'')}</button>`).join('')}
-        </div>
-        <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
-    }
-  }
-
-  // Étape 3 : Couleur
-  if(!sel.couleur){
-    if(sel.brand==='bam' && sel.type){
-      const hauts = Object.keys(stock.bam.hauts).filter(k=>k.startsWith(sel.type+' - ')).map(k=>k.split(' - ')[1]);
-      const bas = Object.keys(stock.bam.bas).filter(k=>k.startsWith(sel.type+' - ')).map(k=>k.split(' - ')[1]);
-      const couleurs = [...new Set([...hauts,...bas])].sort();
-      return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Couleur :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${couleurs.map(c=>`<button onclick="caisseChoix('couleur','${c.replace(/'/g,"\'")}') " class="caisse-btn-sm">${c}</button>`).join('')}
-        </div>
-        <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
-    }
-    if(sel.brand==='lagonBleue' && sel.lagonModele){
-      const couleurs = Object.keys(stock.lagonBleue.categories[sel.lagonModele]?.items||{}).sort();
-      return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Couleur :</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${couleurs.map(c=>`<button onclick="caisseChoix('couleur','${c.replace(/'/g,"\'")}') " class="caisse-btn-sm">${c}</button>`).join('')}
-        </div>
-        <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
-    }
-  }
-
-  // Étape 4 : Taille
-  if(!sel.size){
-    let tailles = [];
-    if(sel.brand==='bam' && sel.type && sel.couleur){
-      const hKey = sel.type+' - '+sel.couleur;
-      const bKey = sel.type+' - '+sel.couleur;
-      const fromHauts = stock.bam.hauts[hKey] ? Object.keys(stock.bam.hauts[hKey]) : [];
-      const fromBas = stock.bam.bas[bKey] ? Object.keys(stock.bam.bas[bKey]) : [];
-      tailles = [...new Set([...fromHauts,...fromBas])];
-    } else if(sel.brand==='sunProject' && sel.itemKey){
-      tailles = Object.keys(stock.sunProject.items[sel.itemKey]||{});
-    } else if(sel.brand==='lagonBleue' && sel.lagonModele && sel.couleur){
-      tailles = Object.keys(stock.lagonBleue.categories[sel.lagonModele]?.items[sel.couleur]||{});
-    }
-    const sizeOrder = ['TU','3XS','2XS','XS','S','M','L','XL','2XL','3XL','4XL','T34','T36','T38','T40','T42','T44','T46','T48','T50','T52'];
-    tailles.sort((a,b)=>sizeOrder.indexOf(a)-sizeOrder.indexOf(b));
-    return `<div style="margin-bottom:6px;font-size:11px;color:#94a3b8">Taille :</div>
+  if(sel.brand==='bam' && !sel.type){
+    const types = [...new Set(
+      [...Object.keys(stock.bam.hauts),...Object.keys(stock.bam.bas)]
+      .map(k=>k.split(' - ')[0])
+    )].sort();
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Type :</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${tailles.map(t=>`<button onclick="caisseChoix('size','${t}')" class="caisse-btn-sz">${t}</button>`).join('')}
-      </div>
-      <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
+        ${types.map(t=>`<button onclick="caisseChoix('type',\`${t}\`)" class="caisse-btn-sm">${t}</button>`).join('')}
+      </div>${backBtn()}`;
   }
 
-  // Étape 5 : Prix
-  return `<div style="margin-bottom:8px;font-size:12px;color:#64748b">
-      <b>${sel.couleur||sel.itemKey} ${sel.size}</b> — Prix :
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-      ${[15,17,19,22,25,29,35,39,49,59].map(p=>`<button onclick="caissePrix(${p})" class="caisse-btn-price">${p}€</button>`).join('')}
-    </div>
-    <div style="display:flex;gap:8px">
-      <input id="prixCustom" type="number" placeholder="Autre prix" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:14px;font-family:Outfit,sans-serif">
-      <button onclick="caissePrix(parseFloat(document.getElementById('prixCustom').value))" style="background:#0f172a;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">OK</button>
-    </div>
-    <button onclick="caisseReset()" class="caisse-btn-back">← Retour</button>`;
+  if(sel.brand==='bam' && sel.type && !sel.couleur){
+    const hauts = Object.keys(stock.bam.hauts).filter(k=>k.startsWith(sel.type+' - ')).map(k=>k.split(' - ').slice(1).join(' - '));
+    const bas = Object.keys(stock.bam.bas).filter(k=>k.startsWith(sel.type+' - ')).map(k=>k.split(' - ').slice(1).join(' - '));
+    const couleurs = [...new Set([...hauts,...bas])].sort();
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Couleur :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${couleurs.map(c=>`<button onclick="caisseChoix('couleur',\`${c}\`)" class="caisse-btn-sm">${c}</button>`).join('')}
+      </div>${backBtn()}`;
+  }
+
+  if(sel.brand==='bam' && sel.type && sel.couleur && !sel.size){
+    const itemKeyH = sel.type+' - '+sel.couleur;
+    const itemKeyB = sel.type+' - '+sel.couleur;
+    const taillesH = stock.bam.hauts[itemKeyH] ? Object.keys(stock.bam.hauts[itemKeyH]) : [];
+    const taillesB = stock.bam.bas[itemKeyB] ? Object.keys(stock.bam.bas[itemKeyB]) : [];
+    const tailles = [...new Set([...taillesH,...taillesB])];
+    const sizeOrder=['S','M','L','XL','2XL','3XL','4XL'];
+    tailles.sort((a,b)=>sizeOrder.indexOf(a)-sizeOrder.indexOf(b));
+    // Déterminer section automatiquement
+    const isHaut = taillesH.length>0;
+    const isBas = taillesB.length>0;
+    const sectionLabel = isHaut&&isBas?'Haut ou Bas ?':(isHaut?'(haut)':'(bas)');
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Taille ${sectionLabel}:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        ${tailles.map(t=>`<button onclick="caisseChoix('size',\`${t}\`)" class="caisse-btn-sz">${t}</button>`).join('')}
+      </div>
+      ${isHaut&&isBas?`<div style="display:flex;gap:6px;margin-bottom:8px">
+        <button onclick="caisseChoix('section','hauts')" class="caisse-btn-sm ${sel.section==='hauts'?'active':''}">👙 Haut</button>
+        <button onclick="caisseChoix('section','bas')" class="caisse-btn-sm ${sel.section==='bas'?'active':''}">👖 Bas</button>
+      </div>`:''}
+      ${backBtn()}`;
+  }
+
+  if(sel.brand==='sunProject' && !sel.couleur){
+    const couleurs = Object.keys(stock.sunProject.items).sort();
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Coloris :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${couleurs.map(c=>`<button onclick="caisseChoix('couleur',\`${c}\`)" class="caisse-btn-sm">${c}</button>`).join('')}
+      </div>${backBtn()}`;
+  }
+
+  if(sel.brand==='sunProject' && sel.couleur && !sel.size){
+    const tailles = Object.keys(stock.sunProject.items[sel.couleur]||{});
+    const sizeOrder=['S','M','L','XL','2XL','3XL','4XL'];
+    tailles.sort((a,b)=>sizeOrder.indexOf(a)-sizeOrder.indexOf(b));
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Taille :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${tailles.map(t=>`<button onclick="caisseChoix('size',\`${t}\`)" class="caisse-btn-sz">${t}</button>`).join('')}
+      </div>${backBtn()}`;
+  }
+
+  if(sel.brand==='lagonBleue' && !sel.lagonModele){
+    const modeles = Object.keys(stock.lagonBleue.categories).sort();
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Modèle :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${modeles.map(m=>`<button onclick="caisseChoix('lagonModele',\`${m}\`)" class="caisse-btn-sm">${m.replace(/^[12]P - /,'')}</button>`).join('')}
+      </div>${backBtn()}`;
+  }
+
+  if(sel.brand==='lagonBleue' && sel.lagonModele && !sel.couleur){
+    const couleurs = Object.keys(stock.lagonBleue.categories[sel.lagonModele]?.items||{}).sort();
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Couleur :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${couleurs.map(c=>`<button onclick="caisseChoix('couleur',\`${c}\`)" class="caisse-btn-sm">${c}</button>`).join('')}
+      </div>${backBtn()}`;
+  }
+
+  if(sel.brand==='lagonBleue' && sel.lagonModele && sel.couleur && !sel.size){
+    const isPareo = sel.lagonModele==='Paréo';
+    if(isPareo){
+      // Paréo = taille unique, prix auto
+      return `<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-weight:700;margin-bottom:4px">${sel.lagonModele} ${sel.couleur}</div>
+        <div style="font-size:22px;font-weight:800;color:#16a34a">24,90€</div>
+        <button onclick="caisseAjouter()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer">➕ Ajouter</button>
+      </div>${backBtn()}`;
+    }
+    const tailles = Object.keys(stock.lagonBleue.categories[sel.lagonModele]?.items[sel.couleur]||{});
+    const sizeOrder=['T34','T36','T38','T40','T42','T44','T46','T48','T50','T52'];
+    tailles.sort((a,b)=>sizeOrder.indexOf(a)-sizeOrder.indexOf(b));
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">Taille :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${tailles.map(t=>`<button onclick="caisseChoix('size',\`${t}\`)" class="caisse-btn-sz">${t}</button>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <button onclick="caisseChoix('lagonQty','1')" class="caisse-btn-sm ${sel.lagonQty==='1'?'active':''}">× 1 — 59,90€</button>
+        <button onclick="caisseChoix('lagonQty','2')" class="caisse-btn-sm ${sel.lagonQty==='2'?'active':''}">× 2 — 50€</button>
+      </div>
+      ${backBtn()}`;
+  }
+
+  // Confirmation avant ajout pour Lagon Bleue
+  if(sel.brand==='lagonBleue' && sel.size){
+    const qty = sel.lagonQty==='2'?2:1;
+    const price = qty===2?25:59.90;
+    return `<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-weight:700;margin-bottom:4px">${sel.lagonModele} ${sel.couleur} ${sel.size}</div>
+      <div style="font-size:22px;font-weight:800;color:#16a34a">${qty===2?'50€ (×2)':price.toFixed(2)+'€'}</div>
+      <button onclick="caisseAjouter()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer">➕ Ajouter au panier</button>
+    </div>${backBtn()}`;
+  }
+
+  // Confirmation BAM / Sun Project
+  if((sel.brand==='bam'&&sel.size)||(sel.brand==='sunProject'&&sel.size)){
+    let price, section='';
+    if(sel.brand==='bam'){
+      section = sel.section || (stock.bam.hauts[sel.type+' - '+sel.couleur]?'hauts':'bas');
+      price = getPrixBAM(sel.type+' - '+sel.couleur, section);
+    } else {
+      price = getPrixSun();
+    }
+    const label = sel.brand==='bam'?`${sel.type} ${sel.couleur} ${sel.size}`:`${sel.couleur} ${sel.size}`;
+    return `<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-weight:700;margin-bottom:4px">${label}</div>
+      <div style="font-size:22px;font-weight:800;color:#16a34a">${price.toFixed(2)}€</div>
+      <button onclick="caisseAjouter()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer">➕ Ajouter au panier</button>
+    </div>${backBtn()}`;
+  }
+
+  return `<div style="color:#94a3b8;font-size:13px">Sélection en cours...</div>`;
+}
+
+function backBtn(){return `<button onclick="caisseBack()" style="margin-top:10px;background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif">← Retour</button>`;}
+
+function caisseBack(){
+  const sel = caisseSelection;
+  if(sel.size) delete sel.size;
+  else if(sel.lagonQty) delete sel.lagonQty;
+  else if(sel.couleur) delete sel.couleur;
+  else if(sel.type||sel.lagonModele){delete sel.type;delete sel.lagonModele;delete sel.itemKey;}
+  else delete sel.brand;
+  renderCaisse();
 }
 
 function caisseChoix(key, val){
   caisseSelection[key] = val;
-  if(key==='type'){
-    // Pour BAM, on a le type, maintenant couleur
-  } else if(key==='lagonModele'){
-    caisseSelection.itemKey = val;
-  } else if(key==='couleur' && caisseSelection.brand==='bam'){
-    caisseSelection.itemKey = caisseSelection.type + ' - ' + val;
-  } else if(key==='couleur' && caisseSelection.brand==='lagonBleue'){
-    // itemKey déjà set
-  }
+  if(key==='lagonModele') caisseSelection.itemKey = val;
+  if(key==='couleur'&&caisseSelection.brand==='bam') caisseSelection.itemKey = caisseSelection.type+' - '+val;
   renderCaisse();
 }
 
-function caissePrix(prix){
-  if(!prix || isNaN(prix)) return;
+function caisseAjouter(){
   const sel = caisseSelection;
-  panier.push({
-    id: Date.now(),
-    brand: sel.brand,
-    itemKey: sel.itemKey || (sel.type+' - '+sel.couleur),
-    size: sel.size,
-    price: prix,
-    piece: sel.brand==='lagonBleue'?'ensemble':'',
-    raw: (sel.couleur||sel.itemKey)+' '+sel.size
-  });
+  let price, label, brandLabel, itemKey, size, brand=sel.brand;
+
+  if(brand==='bam'){
+    const section = sel.section||(stock.bam.hauts[sel.type+' - '+sel.couleur]?'hauts':'bas');
+    price = getPrixBAM(sel.type+' - '+sel.couleur, section);
+    itemKey = sel.type+' - '+sel.couleur;
+    size = sel.size;
+    label = `${sel.type} ${sel.couleur} ${size}`;
+    brandLabel = 'BAM';
+  } else if(brand==='sunProject'){
+    price = getPrixSun();
+    itemKey = sel.couleur;
+    size = sel.size;
+    label = `${sel.couleur} ${size}`;
+    brandLabel = 'Sun Project';
+  } else if(brand==='lagonBleue'){
+    const isPareo = sel.lagonModele==='Paréo';
+    const qty = sel.lagonQty==='2'?2:1;
+    price = isPareo?24.90:(qty===2?25:59.90);
+    itemKey = sel.couleur;
+    size = sel.size||'TU';
+    label = `${sel.lagonModele} ${sel.couleur} ${size}`;
+    brandLabel = 'Lagon Bleue';
+    // Si ×2, ajouter 2 articles
+    if(qty===2){
+      panier.push({id:Date.now(), brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele, piece:'ensemble'});
+      panier.push({id:Date.now()+1, brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele, piece:'ensemble'});
+      caisseSelection = {};
+      renderCaisse();
+      return;
+    }
+  }
+
+  panier.push({id:Date.now(), brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele||'', piece:brand==='lagonBleue'?'ensemble':''});
   caisseSelection = {};
   renderCaisse();
 }
 
-function retirerPanier(idx){
-  panier.splice(idx,1);
-  renderCaisse();
-}
+function retirerPanier(idx){ panier.splice(idx,1); renderCaisse(); }
 
 function validerPanier(paiement){
   if(panier.length===0) return;
   const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const heure = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const txId = Date.now();
+  const total = panier.reduce((acc,p)=>acc+(p.price||0),0);
+
   for(const p of panier){
-    // Déduire du stock
     if(p.brand==='sunProject'){
-      const item = stock.sunProject.items[p.itemKey];
+      const item=stock.sunProject.items[p.itemKey];
       if(item&&p.size&&item[p.size]) item[p.size].s=(item[p.size].s||0)+1;
     } else if(p.brand==='bam'){
       if(stock.bam.hauts[p.itemKey]?.[p.size]) stock.bam.hauts[p.itemKey][p.size].s=(stock.bam.hauts[p.itemKey][p.size].s||0)+1;
       else if(stock.bam.bas[p.itemKey]?.[p.size]) stock.bam.bas[p.itemKey][p.size].s=(stock.bam.bas[p.itemKey][p.size].s||0)+1;
     } else if(p.brand==='lagonBleue'){
-      for(const catData of Object.values(stock.lagonBleue.categories)){
-        const item = catData.items[p.itemKey]||catData.items[p.couleur];
+      const modele = p.lagonModele;
+      if(modele&&stock.lagonBleue.categories[modele]){
+        const catData=stock.lagonBleue.categories[modele];
+        const item=catData.items[p.itemKey];
         if(item&&p.size&&item[p.size]){
           if(catData.type==='2p'){item[p.size].sh=(item[p.size].sh||0)+1;item[p.size].sb=(item[p.size].sb||0)+1;}
           else item[p.size].s=(item[p.size].s||0)+1;
-          break;
         }
       }
     }
-    sales.push({date:today, raw:p.raw, brand:p.brand, itemKey:p.itemKey, size:p.size, price:p.price, paiement});
+    sales.push({date:today, heure, raw:p.label, brand:p.brand, itemKey:p.itemKey, size:p.size, price:p.price, paiement, transactionId:txId, piece:p.piece||''});
   }
+
   saveStock(); saveSales();
+  // Ajouter à transactions
+  transactions.push({id:txId, heure, articles:panier.map(p=>({raw:p.label,itemKey:p.itemKey,size:p.size,price:p.price})), total, paiement});
   panier = [];
   renderCaisse();
   render();
-  alert(`✅ ${panier.length||'Vente'} validée en ${paiement==='cb'?'CB':'Espèces'} !`);
 }
 
-function caisseReset(){
-  caisseSelection = {};
-  renderCaisse();
-}
+function caisseReset(){ caisseSelection={}; renderCaisse(); }
+
 
 render();
 </script>
