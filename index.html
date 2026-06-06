@@ -1643,15 +1643,47 @@ function renderCaisseSelector(){
     return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Taille :</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${tailles.map(t=>`<button onclick="caisseChoix('size',\`${t}\`)" class="caisse-btn-sz">${t}</button>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;margin-bottom:4px">
+        <button onclick="caisseChoix('sunQty','1')" class="caisse-btn-sm ${sel.sunQty==='2'?'':'active'}">× 1 — 29,90€</button>
+        <button onclick="caisseChoix('sunQty','2')" class="caisse-btn-sm ${sel.sunQty==='2'?'active':''}">× 2 — 50€</button>
+      </div>
+      ${backBtn()}`;
+  }
+
+  if(sel.brand==='lagonBleue' && !sel.lagonGroupe){
+    return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Catégorie :</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button onclick="caisseChoix('lagonGroupe','2p')" class="caisse-btn">👙<br>2 Pièces</button>
+        <button onclick="caisseChoix('lagonGroupe','1p')" class="caisse-btn">🩱<br>1 Pièce</button>
+        <button onclick="caisseChoix('lagonGroupe','pareo')" class="caisse-btn">🌴<br>Paréo</button>
       </div>${backBtn()}`;
   }
 
-  if(sel.brand==='lagonBleue' && !sel.lagonModele){
-    const modeles = Object.keys(stock.lagonBleue.categories).sort();
+  if(sel.brand==='lagonBleue' && sel.lagonGroupe && !sel.lagonModele){
+    const cats = stock.lagonBleue.categories;
+    const modeles = Object.keys(cats).filter(k=>cats[k].type===sel.lagonGroupe);
+    if(sel.lagonGroupe==='pareo'){
+      // Paréo = taille unique, aller direct à la couleur
+      const couleurs = Object.keys(cats['Paréo']?.items||{}).sort();
+      return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Couleur :</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${couleurs.map(c=>`<button onclick="caisseChoix('couleurPareo',\`${c}\`)" class="caisse-btn-sm">${c}</button>`).join('')}
+        </div>${backBtn()}`;
+    }
     return `<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Modèle :</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${modeles.map(m=>`<button onclick="caisseChoix('lagonModele',\`${m}\`)" class="caisse-btn-sm">${m.replace(/^[12]P - /,'')}</button>`).join('')}
       </div>${backBtn()}`;
+  }
+
+  // Paréo: couleur choisie directement
+  if(sel.brand==='lagonBleue' && sel.couleurPareo){
+    return `<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-weight:700;margin-bottom:4px">Paréo ${sel.couleurPareo}</div>
+      <div style="font-size:22px;font-weight:800;color:#16a34a">24,90€</div>
+      <button onclick="caisseAjouter()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer">➕ Ajouter</button>
+    </div>${backBtn()}`;
   }
 
   if(sel.brand==='lagonBleue' && sel.lagonModele && !sel.couleur){
@@ -1679,10 +1711,6 @@ function renderCaisseSelector(){
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${tailles.map(t=>`<button onclick="caisseChoix('size',\`${t}\`)" class="caisse-btn-sz">${t}</button>`).join('')}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <button onclick="caisseChoix('lagonQty','1')" class="caisse-btn-sm ${sel.lagonQty==='1'?'active':''}">× 1 — 59,90€</button>
-        <button onclick="caisseChoix('lagonQty','2')" class="caisse-btn-sm ${sel.lagonQty==='2'?'active':''}">× 2 — 50€</button>
-      </div>
       ${backBtn()}`;
   }
 
@@ -1704,12 +1732,15 @@ function renderCaisseSelector(){
       section = sel.section || (stock.bam.hauts[sel.type+' - '+sel.couleur]?'hauts':'bas');
       price = getPrixBAM(sel.type+' - '+sel.couleur, section);
     } else {
-      price = getPrixSun();
+      const qty2 = sel.sunQty==='2';
+      price = qty2?25:29.90;
     }
+    const isSun2 = sel.brand==='sunProject'&&sel.sunQty==='2';
     const label = sel.brand==='bam'?`${sel.type} ${sel.couleur} ${sel.size}`:`${sel.couleur} ${sel.size}`;
+    const priceLabel = isSun2?'50€ (×2 — 25€/pièce)':price.toFixed(2)+'€';
     return `<div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
       <div style="font-weight:700;margin-bottom:4px">${label}</div>
-      <div style="font-size:22px;font-weight:800;color:#16a34a">${price.toFixed(2)}€</div>
+      <div style="font-size:22px;font-weight:800;color:#16a34a">${priceLabel}</div>
       <button onclick="caisseAjouter()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer">➕ Ajouter au panier</button>
     </div>${backBtn()}`;
   }
@@ -1722,9 +1753,11 @@ function backBtn(){return `<button onclick="caisseBack()" style="margin-top:10px
 function caisseBack(){
   const sel = caisseSelection;
   if(sel.size) delete sel.size;
-  else if(sel.lagonQty) delete sel.lagonQty;
+  else if(sel.couleurPareo){delete sel.couleurPareo;}
   else if(sel.couleur) delete sel.couleur;
-  else if(sel.type||sel.lagonModele){delete sel.type;delete sel.lagonModele;delete sel.itemKey;}
+  else if(sel.lagonModele){delete sel.lagonModele;delete sel.itemKey;}
+  else if(sel.type) delete sel.type;
+  else if(sel.lagonGroupe) delete sel.lagonGroupe;
   else delete sel.brand;
   renderCaisse();
 }
@@ -1748,27 +1781,29 @@ function caisseAjouter(){
     label = `${sel.type} ${sel.couleur} ${size}`;
     brandLabel = 'BAM';
   } else if(brand==='sunProject'){
-    price = getPrixSun();
+    const qty2 = sel.sunQty==='2';
+    price = qty2?25:29.90;
     itemKey = sel.couleur;
     size = sel.size;
     label = `${sel.couleur} ${size}`;
     brandLabel = 'Sun Project';
-  } else if(brand==='lagonBleue'){
-    const isPareo = sel.lagonModele==='Paréo';
-    const qty = sel.lagonQty==='2'?2:1;
-    price = isPareo?24.90:(qty===2?25:59.90);
-    itemKey = sel.couleur;
-    size = sel.size||'TU';
-    label = `${sel.lagonModele} ${sel.couleur} ${size}`;
-    brandLabel = 'Lagon Bleue';
-    // Si ×2, ajouter 2 articles
-    if(qty===2){
-      panier.push({id:Date.now(), brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele, piece:'ensemble'});
-      panier.push({id:Date.now()+1, brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele, piece:'ensemble'});
+    if(qty2){
+      panier.push({id:Date.now(), brand, itemKey, size, price, label, brandLabel, piece:''});
+      panier.push({id:Date.now()+1, brand, itemKey, size, price, label, brandLabel, piece:''});
       caisseSelection = {};
       renderCaisse();
       return;
     }
+  } else if(brand==='lagonBleue'){
+    const isPareo = sel.lagonGroupe==='pareo'||sel.lagonModele==='Paréo';
+    price = isPareo?24.90:59.90;
+    itemKey = sel.couleurPareo||sel.couleur;
+    size = isPareo?'TU':(sel.size||'TU');
+    const modeleLabel = isPareo?'Paréo':(sel.lagonModele||'');
+    label = `${modeleLabel} ${itemKey} ${size==='TU'?'':size}`.trim();
+    brandLabel = 'Lagon Bleue';
+    // Si ×2, ajouter 2 articles
+
   }
 
   panier.push({id:Date.now(), brand, itemKey, size, price, label, brandLabel, lagonModele:sel.lagonModele||'', piece:brand==='lagonBleue'?'ensemble':''});
