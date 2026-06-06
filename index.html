@@ -501,6 +501,25 @@ let addCatType = '1p';
 let addNewCat = '';
 let addSizes = [{sz:'S',i:0},{sz:'M',i:0},{sz:'L',i:0},{sz:'XL',i:0}];
 
+const SUPA_URL = 'https://vyvabktwrrxgloficmhc.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmFia3R3cnJ4Z2xvZmljbWhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDEwOTAsImV4cCI6MjA5NjMxNzA5MH0.R7G1FeRWA3CSQn11W4W-ynVRuStT7jYZNupBsJZ-X2o';
+
+async function supaGet(id){
+  const r = await fetch(`${SUPA_URL}/rest/v1/stock_data?id=eq.${id}&select=data`,{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  const d = await r.json();
+  return d[0]?.data;
+}
+
+async function supaSet(id, data){
+  await fetch(`${SUPA_URL}/rest/v1/stock_data?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({data, updated_at: new Date().toISOString()})
+  });
+}
+
 function loadStock(){
   try{const s=localStorage.getItem('stock_v5');return s?JSON.parse(s):JSON.parse(JSON.stringify(INITIAL));}
   catch{return JSON.parse(JSON.stringify(INITIAL));}
@@ -508,8 +527,33 @@ function loadStock(){
 function loadSales(){
   try{return JSON.parse(localStorage.getItem('sales_v5')||'[]');}catch{return [];}
 }
-function saveStock(){localStorage.setItem('stock_v5',JSON.stringify(stock));}
-function saveSales(){localStorage.setItem('sales_v5',JSON.stringify(sales));}
+
+function saveStock(){
+  localStorage.setItem('stock_v5',JSON.stringify(stock));
+  supaSet('stock', stock).catch(()=>{});
+}
+function saveSales(){
+  localStorage.setItem('sales_v5',JSON.stringify(sales));
+  supaSet('sales', sales).catch(()=>{});
+}
+
+async function syncFromSupabase(){
+  try{
+    const [remoteStock, remoteSales] = await Promise.all([supaGet('stock'), supaGet('sales')]);
+    if(remoteStock && Object.keys(remoteStock).length > 0){
+      stock = remoteStock;
+      localStorage.setItem('stock_v5', JSON.stringify(stock));
+    }
+    if(remoteSales && remoteSales.length > 0){
+      sales = remoteSales;
+      localStorage.setItem('sales_v5', JSON.stringify(sales));
+    }
+    render();
+    console.log('✅ Sync Supabase OK');
+  } catch(e){
+    console.log('⚠️ Sync Supabase échoué, données locales utilisées');
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -1515,8 +1559,8 @@ function renderCaisse(){
       <div style="font-size:11px;opacity:0.6;margin-bottom:8px">AUJOURD'HUI</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
         <div><div style="font-size:22px;font-weight:800">${ventesJour.length}</div><div style="font-size:10px;opacity:0.6">VENTES</div></div>
-        <div><div style="font-size:22px;font-weight:800;color:#60a5fa">${cbJour.toFixed(0)}€</div><div style="font-size:10px;opacity:0.6">CB</div></div>
-        <div><div style="font-size:22px;font-weight:800;color:#4ade80">${espJour.toFixed(0)}€</div><div style="font-size:10px;opacity:0.6">ESPÈCES</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#60a5fa">${cbJour.toFixed(2)}€</div><div style="font-size:10px;opacity:0.6">CB</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#4ade80">${espJour.toFixed(2)}€</div><div style="font-size:10px;opacity:0.6">ESPÈCES</div></div>
       </div>
       <div style="text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1)">
         <span style="font-size:24px;font-weight:800">${totalJour.toFixed(2)}€</span>
@@ -1854,6 +1898,7 @@ function caisseReset(){ caisseSelection={}; renderCaisse(); }
 
 
 render();
+syncFromSupabase();
 </script>
 
 <!-- MODAL CAISSE -->
